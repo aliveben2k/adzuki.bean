@@ -20,7 +20,7 @@ When -syn is set, -pop cannot be set. Otherwise, please set -pop.
 
 Steps:
 Run Relate_direct.pl script
-nohup perl Relate_6_direct_5.pl -vcf VCF_FILE -pop POPULATION_LABEL_FILE -map RECOMB_MAP_FILE -al ANCESTOR_ID_LIST [-am ANC/MUT_FOLDER_PATH] [-hap] [-o OUTPUT_PATH] [-mask MASK_FILE] [-bins LOWER,UPPER,STEPSIZE] [-rm REMOVE_SAMPLE_ID_FILE] [-pre PREFIX] [-rr] [-coal COAL_FILE] [-dps] [-clues] [-tvs] [-bp CHR:POS-POS] [-ns INT] [-tco INT] [-pf FLOAT] [-d FLOAT] [-cp COLOR_PALETTE] [-m VALUE] [-n VALUE] [-spl VALUE] [-popi POP_NAMES] [-year VALUE] [-rp all|clues] [-cb FILE] [-rc INT] [--force] [-ow] [-sn SERIAL_NUMBER] [-exc] [-h]
+nohup perl Relate.pl -vcf VCF_FILE -pop POPULATION_LABEL_FILE -map RECOMB_MAP_FILE -al ANCESTOR_ID_LIST [-am ANC/MUT_FOLDER_PATH] [-hap] [-o OUTPUT_PATH] [-mask MASK_FILE] [-bins LOWER,UPPER,STEPSIZE] [-rm REMOVE_SAMPLE_ID_FILE] [-pre PREFIX] [-rr] [-coal COAL_FILE] [-dps] [-clues] [-tvs] [-bp CHR:POS-POS] [-ns INT] [-tco INT] [-pf FLOAT] [-d FLOAT] [-cp COLOR_PALETTE] [-m VALUE] [-n VALUE] [-spl VALUE] [-popi POP_NAMES] [-year VALUE] [-rp all|clues] [-cb FILE] [-rc INT] [--force] [-ow] [-sn SERIAL_NUMBER] [-exc] [-h]
  > LOGFILE 2>&1 &
 -r: Reference fasta file [split_fasta.pl is required]
 -vcf: vcf files, can point to a multi-contig vcf or a folder containing multiple vcfs with one chromosome/contig per vcf.
