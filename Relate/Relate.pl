@@ -32,7 +32,7 @@ my $Relate = "\$Relate";
 chomp(@ARGV);
 print "The script is written by Ben Chien. Mar. 2023.\n";
 print "Input command line:\n";
-print "perl Relate_6_direct_5\.pl @ARGV\n";
+print "perl Relate\.pl @ARGV\n";
 
 if ($#ARGV == -1){
 	&usage;
@@ -1376,7 +1376,7 @@ sub modify_poplabels {
 	}
 }
 sub usage {
-	print BOLD "Usage: perl Relate_6_direct_5.pl -vcf VCF_FILE -pop POPULATION_LABEL_FILE -map RECOMB_MAP_FILE -al ANCESTOR_ID_LIST [-am ANC\/MUT_FOLDER_PATH] [-hap] [-o OUTPUT_PATH] [-mask MASK_FILE] [-bins LOWER,UPPER,STEPSIZE] [-rm REMOVE_SAMPLE_ID_FILE] [-pre PREFIX] [-rr] [-coal COAL_FILE] [-dps] [-clues] [-tvs] [-bp CHR\:POS-POS] [-ns INT] [-tco INT] [-pf FLOAT] [-d FLOAT] [-cp COLOR_PALETTE] [-m VALUE] [-n VALUE] [-spl VALUE] [-popi POP_NAMES] [-year VALUE] [-rp all\|clues] [-cb FILE] [-rc INT] [-epsrp INT] [--force] [-ow] [-sn SERIAL_NUMBER] [-exc] [-h]\n\n", RESET;
+	print BOLD "Usage: perl Relate.pl -vcf VCF_FILE -pop POPULATION_LABEL_FILE -map RECOMB_MAP_FILE -al ANCESTOR_ID_LIST [-am ANC\/MUT_FOLDER_PATH] [-hap] [-o OUTPUT_PATH] [-mask MASK_FILE] [-bins LOWER,UPPER,STEPSIZE] [-rm REMOVE_SAMPLE_ID_FILE] [-pre PREFIX] [-rr] [-coal COAL_FILE] [-dps] [-clues] [-tvs] [-bp CHR\:POS-POS] [-ns INT] [-tco INT] [-pf FLOAT] [-d FLOAT] [-cp COLOR_PALETTE] [-m VALUE] [-n VALUE] [-spl VALUE] [-popi POP_NAMES] [-year VALUE] [-rp all\|clues] [-cb FILE] [-rc INT] [-epsrp INT] [--force] [-ow] [-sn SERIAL_NUMBER] [-exc] [-h]\n\n", RESET;
 	print "If -am is set, -vcf, -map and -al are not required.\n";
 	print "For -popi, multiple populations as an group could be indicated by \[population_1,population_2\]. Multiple independent runs can be indicated by comma as population_1,population2.\nYou can combine these two functions as [population_1,population_2],population_3\n";
 	print "The first run will be population_1\+population_2, and the second run will be population_3.\n";
