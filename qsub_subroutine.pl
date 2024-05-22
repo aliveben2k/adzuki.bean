@@ -92,10 +92,10 @@ my $jn = '-N ';
 my $sppn; 
 my $pname = '-P ';
 foreach (@server){
-	#if ($_ =~ /<PBS_server_IP>/){ #PBS system
+	#if ($_ =~ /<PBS_server_IP>/){ #PBS pro system
 	#	$serv = 1;
 	#}
-    if ($_ =~ /172.28.111/){ #Taiwania 3, Slurm system
+    if ($_ =~ /172.28.111/){ #Slurm system
 		$serv = 3;
 		$scr_dir = '#SBATCH';
 		$par = '-p';
