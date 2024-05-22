@@ -24,7 +24,7 @@ Before doing the analysis, please make sure that you have check the following th
 check if “qsub_subroutine.pl” is in the $HOME/softwares folder.
 check if “qsub_status.pl” is in the $HOME/softwares folder.
 check if you have set the path to $HOME/softwares folder.
-
+modify line 14, 15 of "gemma.pl" to infer the name of "gemma" script and the conda environment used for R
 
 gemma.pl:
 Usage:
