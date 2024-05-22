@@ -92,7 +92,7 @@ my $jn = '-N ';
 my $sppn; 
 my $pname = '-P ';
 foreach (@server){
-	#if ($_ =~ /<PBS_server_IP>/){ #PBS pro system
+	#if ($_ =~ /<PBS_server_IP>/){ #PBS system
 	#	$serv = 1;
 	#}
     if ($_ =~ /172.28.111/){ #Slurm system
