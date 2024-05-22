@@ -1,1 +1,66 @@
+Before doing the analysis, please make sure that you have check the following things:
+
+check if “qsub_subroutine.pl” and “qsub_status.pl” are in the $HOME/softwares folder.
+check if you have set the path to $HOME/softwares folder.
+make sure that “export create_job=/$HOME/softwares/qsub_subroutine.pl”, “export create_job=/$HOME/softwares/qsub_status.pl”, and “export plink=/[path to plink file]/[plink executable file name]” is in ~/.bashrc or ~/.bash_profile. If it doesn’t, please add it. 
+plink software: https://www.cog-genomics.org/plink/
+IMPORTANT: ADMIXTURE doesn’t allow chromosome names other than integers in vcf. Please rename the chromosomes if they are not integers.
+
+(1) admixture_qsub.pl
+
+Usage: perl admixture_qsub.pl -vcf|-bed VCF_FILE|BED_FILE -k INT [-sn SN][-no_prune][-mem INT][-local][-exc][-h\|--help]
+
+-vcf: vcf_file
+-bed: bed_file
+(one of the above file type is acceptable, please don't use both type of files as an input)
+-k: [1-30] it defines how many K values should be tested.
+-sn: serial number (optional)
+-no_prune: by default, the prune option is on, which means it will break the potential linkage of the SNPs. You can turn off this option by this argument.
+-mem: change memory to use. Should be an integer.
+-local: run the script locally. (instead of on the server)
+-h: help
+
+**This script needs to be run on the server.
+**If you use a vcf file as an input, background running (nohup) is highly recommended, or don't turn off the running program.
+**possible pitfalls:
+If you got “Error: Out of memory.  The --memory flag may be helpful.” Please modify line 4 of admixture_qsub.pl to $plink = ‘plink64’, and make sure you have installed the 64-bit version of plink software and named the excusable file as “plink64”; It will use 64-bit plink program instead of 32-bit plink program. It might solve the problem.
+If you got “Invalid chromosome code!  Use integers.” Please rename your chromosome name with integers only in the vcf. You can do it by “bcftools annotate --rename-chrs map_file vcf_file” function. (map_file: with "old_name new_name" pairs separated by space, each pair in separated lines)
+
+(2) sort_admixture_pca_v2.pl
+
+Usage: perl $create_job -cj_exc -cj_env /home/hpc/crlee/miniconda3/envs/R-4.1/bin perl sort_admixture_pca.pl -vcf A_VCF_FILE -q A_Q_FILE -l A_SAMILE_INFO_FILE [-mtx MATRIX_FILE] [-reorder] [-m RATIO]
+#If you have run the NJ_tree pipeline (suggest to do this first, the step 3 also needs files from this pipeline). You can supply *.mtx file using option -mtx. 
+NJ_tree pipeline: Lee_lab\Computation_related\Pipelines_by_Ben\admixture_&_NJ_tree\NJ_tree
+-vcf: vcf_file
+-q: *.Q file generated from admixture program (or admixture_qsub.pl)
+-l: list file (please see "sample_info.txt" as a referencif "type" or "country" columns are not available, please type "e format), NA" instead.
+-reorder: If you want to order your samples by the user-defined order, please use this option, the sample order will be the same with the list file indicated by -l option.
+-m: ratio, this defines the filtering threshold to assign groups based on admixture result. Possible values: 0-1. default: no
+
+Output files:
+PCA_K*_table.rda (R data file that can be used for plotting)
+PCA_analysis.pdf (bar plot with PC1, PC2,...,PC20)
+PCA_K*.pdf (PCA plot)
+PCA_K*_table.txt (text file for PCA plot)
+sorted_[*.Q file name] (sorted *.Q file with groups and sample name)
+admixture_K*.pdf (admixture plot)
+
+**This script can be run on a local machine.
+IMPORTANT: pca_plot_v2.R and admixture_plot.R are required in the same folder. If you do not supply the *.mtx file, vcf2table_missingNA.pl and Calculate_pairwise_dist_simple_mo.R are also required.
+**R packages "reshape2", "ggplot2", "tidyverse", “ape” are required.
+
+(3) modify_nex.pl (optional)
+
+Usage: perl $create_job -cj_exc perl modify_nex.pl NEX_LABEL_LIST
+
+Output files:
+iTOL_styles_PCA_K*_table.txt (iTOL branch color file)
+colored_K*_tree.nex (NEXUS file with colored labeling for FigTree)
+
+This file will find the *.nex files, and generate color-defined *.nex file for FigTree and color files for iTOL website.
+**This script can be run on a local machine.
+** PCA_K*_table.txt files generated from "sort_admixture_pca.pl" are required.
+** *.nex files are generated from the NJ_tree pipeline. Please run NJ_tree before running step 3.
+** Please see “nex_list.txt” for the format of NEX_LABEL_LIST
+**The first text before “_” should be exactly the same with your original labels.
 
