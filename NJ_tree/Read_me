@@ -1,1 +1,25 @@
+This pipeline is used to run on a PBS pro or Slurm server. It can create necessary scripts to send jobs.
+If you wish to run it in a local machine, please use the option "-local".
 
+Before doing the analysis, please make sure that you have check the following things:
+check if “qsub_subroutine.pl” is in the $HOME/softwares folder.
+check if “qsub_status.pl” is in the $HOME/softwares folder.
+check if you have set the path to $HOME/softwares folder.
+
+Please execute "vcf2phylo_qsub.pl" for NJ tree file.
+Other files are required for vcf2phylo_qsub.pl
+
+**This is a server script, if you want to run in the local machine, please use -local option.
+
+Usage:
+perl vcf2phylo.pl -i INPUT_FILE.vcf(.gz) -o OUTPUT_PREFIX_NAME [-pop POPULATION_INFO_FILE] [-mem] [-local] [-exc]
+
+-i: vcf file
+-o: output path with filename without extension such as .txt
+-pop: (optional) population information, separated by tab, with/without header line (better without header line). If -pop is used, the phylogenetic tree will be generated based on “population level” instead of “individual level”.
+	format: ID	pupulation
+-mem: memory used for the job (in GB)
+-local: run the pipeline locally
+-exc: send the job for execution
+
+*** R library "ape" is required. Please make sure you have this package before execution.
