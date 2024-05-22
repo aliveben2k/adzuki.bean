@@ -1,1 +1,59 @@
+This is the pipeline used for GEMMA GWAS analysis. The original program and manual can be found here:
+https://github.com/genetics-statistics/GEMMA
+
+Before starting:
+gemma.pl will use listed samples in phenotype file to generate *.bimbam file based on *.vcf(.gz) file. Also, if you have a covariant file, gemma.pl will use the phenotype file to reorder the covariant file. Thus, you don’t need to worry about the order, repeated sample ID, selected samples etc. in the analysis. However, You need to make sure that all samples in the phenotype file present in the vcf file.
+
+This pipeline is a server used pipeline. The qsub files will be generated automatically.
+Please use “nohup” and “2>&1 &” to run it in the background.
+
+**IMPORTANT**
+The phenotype file and the covariant file MUST contain the header line and the sample ID in the beginning of each line.
+The sample name in the phenotypic file MUST be the same with the sample name in the vcf file. (it is not necessary to have all sample name in the phenotypic file, and the order is not necessary to be the same)
+The vcf should be in bi-allele format. Phenotype file is required.
+Number of the samples should be the same between phenotype file and covariant file if covariant file is defined.
+Possible pitfalls: 
+FAILED: Parsing input file 'XXX.bimbam.gz' failed in function ReadFile_geno in src/gemma_io.cpp at line 743 (744)
+When you get this error message, it means that it fails to get enough genotypes (either the variance of genotypes is not enough or the sample size is not enough). You need to increase your sample size or choose different samples that are more distanced. 
+/var/spool/torque/mom_priv/jobs/[JOB_ID]: line 6:  3176 Killed                  gemma-0.98.5 -g…………
+When you got a message said that job is killed in the *.out file, usually it means you don’t have enough memory to run the job. Please increase the memory assigned to the job by argument “-mem”. eg. “-mem 64” means using 64gb of memory. If you cannot assign large memory in gc3 server, please run it in other servers such as h71 or h81.
+If you have a problem using gemma.pl, please try an alternative file of gemma.pl and other necessary files in the “stable” folder.
+
+Before doing the analysis, please make sure that you have check the following things:
+
+check if “qsub_subroutine.pl” is in the $HOME/softwares folder.
+check if “qsub_status.pl” is in the $HOME/softwares folder.
+check if you have set the path to $HOME/softwares folder.
+
+
+gemma.pl:
+Usage:
+perl gemma.pl -vcf VCF_FILE_PATH -p PHENOTYPE_FILE [-g BIMBAM_FILE] [-ioff] [-c|-ec COVARIANTS_FILE] [-a ANNOTATION_FILE] [-o OUTPUT_PATH] [-eigen] [-lm] [-bslmm INT] [-predict] [-nor] [-mem MEMORY_USE_IN_GB] [-maf MAF_VALUE] [-ow] [-sn SERIAL_NUMBER] [-n INT] [-exc] [-h]
+
+-vcf: a vcf file containing all of the samples and contigs.
+-p: a phenotype file
+-g: *.bimbam file, only use it if you have a proper bimbam file (the size of the sample should be the same with the phenotypic file)
+-ioff: don’t use imputation value (if available).
+-c: a coveriants file (no repeated ID)
+-ec: a coveriants file (with repeated ID, the list order must be the same with phenotype file)
+-a: an annotation file
+-n: thread to use for vcf2bimbam step. Set to a larger number will decrease the time for the analysis. vcf2bimbam_thread.pl is required for this function. (default: 1)(Apr. 2023 new function)
+-o: output directory path. If not defined, the default output directory is the same with phenotype file. (and also a directory “output_SN” under the same path as the phenotype file, SN: serial number)
+-eigen: use eigen method for the analysis
+-lm: use Linear Model instead of Linear Mix Model. Kinship matrix is not applied.
+-bslmm: specifies which model to fit: 1: Standard linear BSLMM 2: ridge regression/GBLUP 3: probit BSLMM. Default: 1 (if used)
+-predict: use BSLMM agorism to train the data, and predict the missing phenotype, this function is also provided by GEMMA
+-nor: inverse normal transformation, it will make the phenotypic file to be inverse normalized. (Feb. 2022 new function)
+-mem: memory used for every job.
+-maf: set the MAF threshold for filtering after GWAS analysis.
+-ow: over-write all output files
+-sn: serial number specified by user
+-exc: execute the jobs on the PBS server
+-h: help 
+
+Covariants file format example: covariants_example.txt
+Phenotype file format example: phenotype_example.txt
+
+Other required scripts:
+vcf2bimbam.pl, vcf2bimbam_thread.pl, combine_prdt_pheno.pl, modify_assoc.pl, qqman_v2.R
 
