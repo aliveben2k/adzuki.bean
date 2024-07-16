@@ -1750,7 +1750,6 @@ sub raw_gvcf {
 			}
 		}
 		next if ($exist == 1);
-		next if ($list =~ /\b$temp[0]\b/);
 		$list .= "$temp[0]\t";
 		if (-e "$path\/$temp[0]_R1\.fastq\.trimmed" || -e "$path\/$temp[0]\.fastq\.trimmed"){
 			if (-e "$path\/$temp[0]_R1\.fastq\.trimmed"){
