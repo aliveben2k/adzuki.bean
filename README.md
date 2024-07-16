@@ -7,6 +7,8 @@ This file contains subroutines for different script files, including scripts for
 
 Please put "qsub_subroutine.pl" in your "$HOME" folder or "$HOME/softwares" folder.
 
+Some pipelines use Conda environment. The defult path for conda is $HOME/miniconda3/. If you installed Conda in the different path, please check the script to set the right Conda path before use.
+
 The "create_job.pl" can independently generate scripts for job sending on server systems (qsub_subroutine.pl is also required).
 
 Please modified IP address of the server in "qsub_subroutine.pl":
