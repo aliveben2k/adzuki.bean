@@ -6,7 +6,7 @@ my $time = scalar localtime();
 chomp(@ARGV);
 my $input = $ARGV[0];
 #my $output = $ARGV[1];
-my $dp = 3;
+my $min_depth = 3;
 my $out = $input;
 
 my @tmp_outs = split(/\//, $out);
@@ -32,7 +32,6 @@ open (OUTPUT, "|-", "bgzip \> $out") || die BOLD "Cannot write $out: $!", RESET,
 #open (OUTPUT, ">$out") || die BOLD ("Cannot write $out: $!\n"), RESET;
 my $num = 1; 
 my @sample_two_alleles;
-my $min_depth = 3;
 my $fixed;
 my $fix_num = 0; my $fix_count = 0; my $fix_stat = 0; my $total = 0;
 my $no_DP = 0; my $less_min = 0; my $has_aster = 0;
