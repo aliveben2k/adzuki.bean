@@ -1,0 +1,7 @@
+JP_LR	dodgerblue
+CN_LRN	gold
+CN_LRS	red
+JP_WL	navy
+CN_WL	orange3
+SOUTH_WL2	red4
+SOUTH_WL1	dodgerblue4
