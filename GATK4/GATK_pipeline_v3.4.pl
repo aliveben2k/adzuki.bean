@@ -1750,6 +1750,7 @@ sub raw_gvcf {
 			}
 		}
 		next if ($exist == 1);
+		#next if ($list =~ /\b$temp[0]\b/);
 		$list .= "$temp[0]\t";
 		if (-e "$path\/$temp[0]_R1\.fastq\.trimmed" || -e "$path\/$temp[0]\.fastq\.trimmed"){
 			if (-e "$path\/$temp[0]_R1\.fastq\.trimmed"){
@@ -2047,6 +2048,7 @@ sub raw_gvcf {
 			my $return = &pbs_setting("$proj$exc$local\-cj_quiet -cj_ppn 2 -cj_mem 60 -cj_qname gatk_02_$cnt -cj_sn $ran -cj_qout . $out");
 			print BASH "$return\n";
 		}
+		print "debug: $cnt\n";
 		$stp = "0"; @temp = ();
 	}
 	unless ($local){
@@ -3447,7 +3449,7 @@ sub GenotypeGVCFs_4 {
 	$dict = $ref;
 	$dict =~ s/fa$|fas$|fasta$/dict/i;
 	@chrs = &check_chrs($path_o, $ref, $pre);
-	if ($wes){
+	if ($wes || $ns eq "1"){
 		@chrs = "all";
 	}
 	unless ($local){
