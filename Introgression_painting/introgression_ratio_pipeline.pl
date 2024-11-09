@@ -20,10 +20,10 @@ if ($#ARGV == -1){
 my $conda = "R-4.1";
 
 print "Input command line:\n";
-print "perl introgression_ratio_pipeline.test\.pl @ARGV\n\n";
+print "perl introgression_ratio_pipeline\.pl @ARGV\n\n";
 
 sub usage {
-    print "Usage: perl introgression_ratio_pipeline.test.pl -vcf PATH -list LIST_FILE [-win INT] [-step INT] [-pre PREFIX] [-p1c COLOR] [-p2c COLOR] [-ci] [-rcal] [-rplot] [-sn SN] [-m FLOAT] [-d FLOAT] [-n] [-mem INT] [-local] [-ow] [-exc]\n";
+    print "Usage: perl introgression_ratio_pipeline.pl -vcf PATH -list LIST_FILE [-win INT] [-step INT] [-pre PREFIX] [-p1c COLOR] [-p2c COLOR] [-ci] [-rcal] [-rplot] [-sn SN] [-m FLOAT] [-d FLOAT] [-n] [-mem INT] [-local] [-ow] [-exc]\n";
     print "-list: trios list, population_name follows by sample_names. 3 lines: 2 parents at first two lines, and the testing population in the 3rd line.\n";
     print "-win: window size (SNP number). Default: 1000\n";
     print "-step: step size (SNP number). Default: 500\n";
@@ -292,7 +292,7 @@ my $ck_files = `ls -l $path\/$ran\_output \| grep \"introgression.rda\"`;
 unless ($ck_files && $ow == 0 && $rc == 0){
 	open (BASH, ">my_bash_introgression_3_$ran.sh") || print "Cannot write my_bash_introgression_3_$ran.sh: $!\n";
 	foreach my $i (0..$#trios_files){
-		$out = "Rscript new_intro_count.test.R -g $trios_files[$i] -t $list -gi $path\/$ran\_genome_info.txt -p $path\/$ran\_output -w $win -s $step -m $missing -d $diff\\n";
+		$out = "Rscript new_intro_count.R -g $trios_files[$i] -t $list -gi $path\/$ran\_genome_info.txt -p $path\/$ran\_output -w $win -s $step -m $missing -d $diff\\n";
 		my $return = &pbs_setting("$cj_exc$local\-cj_quiet -cj_mem $mem -cj_conda $conda -cj_qname calculation_$i -cj_sn $ran -cj_qout . $out");
 		print BASH "$return\n";
 	}
@@ -310,7 +310,7 @@ unless ($ck_files && $ow == 0 && $rc == 0){
 $ck_files = "";
 $ck_files = `ls -l $path\/$ran\_output \| grep \"introgression.tiff\"`;
 unless ($ck_files && $ow == 0 && $rp == 0){
-	$out = "Rscript intro_plot.test.R -p $path\/$ran\_output -t $list -gi $path\/$ran\_genome_info.txt $ci\-p1c $p1c -p2c $p2c\\n";
+	$out = "Rscript intro_plot.R -p $path\/$ran\_output -t $list -gi $path\/$ran\_genome_info.txt $ci\-p1c $p1c -p2c $p2c\\n";
 	&pbs_setting("$cj_exc$local\-cj_quiet -cj_conda $conda -cj_qname plotting -cj_sn $ran -cj_qout . $out");
 	if ($exc == 1){
 		unless ($local){
