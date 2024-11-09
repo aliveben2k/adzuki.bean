@@ -17,12 +17,15 @@ else {
 my @server = `ip route get 1.2.3.4 \| awk \'\{print \$7\}\'`;
 chomp(@server);
 my $conda = '-cj_conda R-4.1 ';
-my $clues_plot = 1;
+my $clues_plot = 0;
 foreach (@server){
 	if ($_ =~ /140.112.2.73/){
 		$conda = '-cj_env /home/hpc/crlee/miniconda3/envs/R-4.1/bin ';
 	}
 	if ($_ =~ /140.112.2.71/){
+		$clues_plot = 0;
+	}
+	if ($_ =~ /140.112.2.90/){
 		$clues_plot = 0;
 	}
 }
@@ -32,7 +35,7 @@ my $Relate = "\$Relate";
 chomp(@ARGV);
 print "The script is written by Ben Chien. Mar. 2023.\n";
 print "Input command line:\n";
-print "perl Relate\.pl @ARGV\n";
+print "perl Relate_6_direct_5\.pl @ARGV\n";
 
 if ($#ARGV == -1){
 	&usage;
@@ -47,7 +50,7 @@ my $coal; my @popis; my $year = "--years_per_gen 1 "; my $td = "--threshold 0 ";
 my $repeat = 1; my $spl = 0; my @ancs; my $bin = -1;
 my $eps = 1; my $dps = 0; my $clues = 0; my @cbins; my $epsrp = 100;
 my @clues_chr; my @clues_fbp; my @clues_lbp;
-my $ns = "--num_samples 5 "; my $tvs = 0;
+my $ns = "--num_samples 5 "; my $tvs = 0; my $mem = 12;
 my $rc = 1; my $cf = "b";
 my $qout; my $replot; my @cps;
 for (my $i=0; $i<=$#ARGV; $i++){
@@ -64,6 +67,12 @@ for (my $i=0; $i<=$#ARGV; $i++){
 	}
 	if ($ARGV[$i] eq "\-ow"){
         $ow = 1;
+	}
+	if ($ARGV[$i] eq "\-mem"){
+        $mem = $ARGV[$i+1];
+        unless ($mem =~ /\d/ && $mem <= 128 && $mem >= 1){
+			die "-mem: only digitals can be accepted. (1-128)\n";
+		}
 	}
 	if ($ARGV[$i] eq "\-o"){
 		$o_path = $ARGV[$i+1];
@@ -387,6 +396,10 @@ if ($rc > 1000){
 		die "-rc bigger than 1000. Use --force to force run the repeats.\n";
 	}
 }
+if ($clues == 1){
+	$dps = 1;
+}
+
 if ($tvs == 1){
 	$cf = "a";
 }
@@ -537,7 +550,7 @@ if (scalar(@vcfs) == 1){
 		print BASH "qsub \.\/qsub_files\/$ran\_seperate_vcf_$_\.q\n";
 		$qout = "vcftools --gzvcf $vcfs[0] --recode --recode-INFO-all --chr $_ --stdout \| bgzip -c \> $path\/$ran\_$_.input.vcf.gz\\n";
 		push(@vcfs_tmp, "$path\/$ran\_$_.input.vcf.gz");
-		&pbs_setting("$exc\-cj_quiet -cj_qname seperate_vcf_$_ -cj_ppn 4 -cj_sn $ran -cj_qout . $qout");
+		&pbs_setting("$exc\-cj_quiet -cj_qname seperate_vcf_$_ -cj_ppn 4 -cj_mem $mem -cj_sn $ran -cj_qout . $qout");
 	}
 	close(BASH);
 	if ($exc){
@@ -677,7 +690,7 @@ foreach (@vcfs){
     	}
     }
     push(@r_inputs, "$o_path\/inputs\/$ran\_input_chr$num");
-    &pbs_setting("$exc\-cj_quiet -cj_qname relate_input_$cnt -cj_ppn 4 -cj_sn $ran -cj_qout . $qout");
+    &pbs_setting("$exc\-cj_quiet -cj_qname relate_input_$cnt -cj_ppn 4 -cj_mem $mem -cj_sn $ran -cj_qout . $qout");
 }
 close(BASH);
 if ($exc){
@@ -722,13 +735,13 @@ foreach (@r_inputs){ #chromosomes
     			$relate_map = "--map $o_path\/genetic_maps\/$cnt.gmap.map ";
     		}
     	}
-        $qout .= "$Relate\/bin\/Relate --mode All --memory 12 -m $mrate -N $es --haps $_.haps --sample $_.sample $relate_map\--annot $_.annot $dist$coal\-o $out\\n";
+        $qout .= "$Relate\/bin\/Relate --mode All --memory $mem -m $mrate -N $es --haps $_.haps --sample $_.sample $relate_map\--annot $_.annot $dist$coal\-o $out\\n";
         if ($pre_path ne "."){
             $qout .= "mv -f  $out.anc $pre_path\/$out.anc\\n";
             $qout .= "mv -f $out.mut $pre_path\/$out.mut\\n";
         }
     }
-    &pbs_setting("$exc\-cj_quiet -cj_mem 12 -cj_qname relate_main_$cnt -cj_sn $ran -cj_qout . $qout");
+    &pbs_setting("$exc\-cj_quiet -cj_mem $mem -cj_qname relate_main_$cnt -cj_sn $ran -cj_qout . $qout");
     $cnt++;
 }
 close(BASH);
@@ -755,8 +768,32 @@ if (-e "$o_path\/popsize\/$ran\_popsize_avg.rate"){
 	my @tmp_mrates = <MRATE>;
 	chomp(@tmp_mrates);
 	close(MRATE);
-	my @curr_mrate = split(/\t+|\s+/, $tmp_mrates[0]);
-	$mrate = $curr_mrate[1];
+	my $min_yr; my $max_yr; 
+	foreach my $i (1..$#tmp_mrates-1){
+		my @curr_mrate = split(/\t+|\s+/, $tmp_mrates[$i]);
+		my @next_mrate = split(/\t+|\s+/, $tmp_mrates[$i+1]);
+		if ($i == 1){
+			$min_yr = $curr_mrate[0];
+		}
+		if ($next_mrate[1] =~ /-nan/){
+			$max_yr = $next_mrate[0];
+			last;
+		}
+	}
+	my $yr_range = $max_yr - $min_yr;
+	print "debug 1: $max_yr $min_yr $yr_range\n";
+	my $mrate_tmp = 0;
+	foreach my $i (1..$#tmp_mrates-1){
+		my @curr_mrate = split(/\t+|\s+/, $tmp_mrates[$i]);
+		my @next_mrate = split(/\t+|\s+/, $tmp_mrates[$i+1]);
+		$mrate_tmp = $mrate_tmp + $curr_mrate[1] * (($next_mrate[0] - $curr_mrate[0]) / $yr_range);
+		if ($next_mrate[1] =~ /-nan/){
+			last;
+		}
+		print "debug 3: $mrate_tmp\n";
+	}
+	print "debug 4: $mrate_tmp\n";
+	$mrate = $mrate_tmp;
 }
 
 #detect positive selection
@@ -889,8 +926,9 @@ if ($dps == 1){
 }
 
 #sample branch lengths for clues
+my @plot_py; my @plot_r;
 if ($clues == 1 || $tvs == 1){
-print "debug: $clues $tvs\n";
+#print "debug: $clues $tvs\n";
 foreach my $z (1..$rc){
 	print "Generating commend lines of sample branch lengths for CLUES...\n";
     my $dist;
@@ -949,7 +987,7 @@ foreach my $z (1..$rc){
 					last;
 				}
 			}
-			print "debug: $clues_chr[$i]\n";
+			#print "debug: $clues_chr[$i]\n";
 			if ($tvs == 1){
 				unless (-e "$o_path\/TreeViewSamples\/ALL\/$ran\_$z\_TreeViewSamples_chr$clues_chr[$i].anc" && $ow == 0){
 					print "Sample branch lengths for TreeViewSamples \(chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\) start...\n";
@@ -975,18 +1013,22 @@ foreach my $z (1..$rc){
 					print "Sample branch lengths for CLUES \(chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\) start...\n";
 					$qout = "$Relate\/scripts/SampleBranchLengths/SampleBranchLengths.sh -i $o_path\/popsize\/$ran\_popsize_chr$clues_chr[$i] -m $mrate $ns\--first_bp $clues_fbp[$i] --last_bp $clues_lbp[$i] $coal\--format $cf -o $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\\n";
 				}
-				if ($clues_plot == 1){
 					unless (-e "$o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].post.npy" && $ow == 0){
-						$qout .= "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
+						#$qout .= "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
+						push(@plot_py, "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n");
 					}
 					elsif ($replot =~ /clues|all/i){
-						$qout .= "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
+						#$qout .= "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
+						push(@plot_py, "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n");
 					}
+				if ($clues_plot == 1){
 					unless (-e "$o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].pdf" && $ow == 0){
-						$qout .= "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
+						#$qout .= "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
+						push(@plot_r, "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n");
 					}
 					elsif ($replot =~ /clues|all/i){
-						$qout .= "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
+						#$qout .= "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
+						push(@plot_r, "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n");
 					}
 				}
 				print BASH "qsub \.\/qsub_files\/$ran\_relate_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\.q\n";
@@ -1019,13 +1061,17 @@ foreach my $z (1..$rc){
 			}
 		}
 		foreach my $l (0..$#popis){
-			my @r_inputs_tvs = &subset_sample($ran, $conda, $o_path_tvs[$l], $pop, $popis[$l], $exc, $ow, \@r_inputs);
+			my @r_inputs_tvs;
 			my $popi_out_name;
 			$popi_out_name = $popis[$l];
 			$popi_out_name =~ s/--pop_of_interest /_/;
 			$popi_out_name =~ s/[\s\,]//g;
 			if ($tvs == 1){
+				@r_inputs_tvs = &subset_sample($ran, $conda, $o_path_tvs[$l], $pop, $popis[$l], $exc, $ow, \@r_inputs);
 				&subset_inputs($ran, $conda, $o_path_tvs[$l], $pop, $popis[$l], $exc, $ow, \@r_inputs_ori);
+			}
+			if ($clues == 1 && $dps == 0){
+				&subset_sample($ran, $conda, $o_path_clues[$l], $pop, $popis[$l], $exc, $ow, \@r_inputs);
 			}
 			open (BASH, ">my_bash_relate_CLUES_$popi_d_names[$l]\_$ran\.sh") || die BOLD "Cannot write my_bash_relate_CLUES_$popi_d_names[$l]\_$ran\.sh: $!", RESET, "\n";
 			my @popi_clues_outputs;
@@ -1061,7 +1107,7 @@ foreach my $z (1..$rc){
 							$qout .= "$Relate\/scripts\/TreeView/TreeViewSample.sh --haps $tvs_input.haps --sample $tvs_input.sample --poplabels $o_path_tvs[$l]\/popsize\/$ran\_popsize_chr$clues_chr[$i].poplabels --anc $o_path_tvs[$l]\/$ran\_$z\_TreeViewSamples$popi_out_name\_chr$clues_chr[$i].anc --mut $o_path_tvs[$l]\/$ran\_$z\_TreeViewSamples$popi_out_name\_chr$clues_chr[$i].mut --dist $o_path_tvs[$l]\/popsize\/$ran\_popsize_chr$clues_chr[$i].dist --bp_of_interest $clues_fbp[$i] $year\-o $o_path_tvs[$l]\/$ran\_$z\_TreeViewSamples$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\\n";
 						}
 					}
-					print "debug: $clues_chr[$i]\n";
+					#print "debug: $clues_chr[$i]\n";
 					print BASH "qsub \.\/qsub_files\/$ran\_relate_TreeViewSamples_$popi_d_names[$l]\_chr$clues_chr[$i]\_$clues_fbp[$i].q\n";
 					&pbs_setting("$exc\-cj_quiet $conda\-cj_qname $z\_relate_TreeViewSamples_$popi_d_names[$l]\_chr$clues_chr[$i]\_$clues_fbp[$i] -cj_sn $ran -cj_qout . $qout");
 					$qout = "";
@@ -1077,18 +1123,22 @@ foreach my $z (1..$rc){
 						print "Sample branch lengths for CLUES \($popi_d_names[$l]\: chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\) start...\n";
 						$qout = "$Relate\/scripts\/SampleBranchLengths\/SampleBranchLengths.sh -i $o_path_clues[$l]\/popsize\/$ran\_popsize_chr$clues_chr[$i] -m $mrate $ns\--first_bp $clues_fbp[$i] --last_bp $clues_lbp[$i] $coal\--format $cf -o $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\\n";
 					}
-					if ($clues_plot == 1){
 						unless (-e "$o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].post.npy" && $ow == 0){
-							$qout .= "python $Relate\/clues\/inference.py --times $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
+							#$qout .= "python $Relate\/clues\/inference.py --times $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
+							push(@plot_py, "python $Relate\/clues\/inference.py --times $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n");
 						}
 						elsif ($replot =~ /clues|all/i){
-							$qout .= "python $Relate\/clues\/inference.py --times $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
+							#$qout .= "python $Relate\/clues\/inference.py --times $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
+							push(@plot_py, "python $Relate\/clues\/inference.py --times $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n");
 						}
+					if ($clues_plot == 1){
 						unless (-e "$o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].pdf" && $ow == 0){
-							$qout .= "Rscript clues_plot.R -f $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
+							#$qout .= "Rscript clues_plot.R -f $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
+							push(@plot_r, "Rscript clues_plot.R -f $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n");
 						}
 						elsif ($replot =~ /clues|all/i){
-							$qout .= "Rscript clues_plot.R -f $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
+							#$qout .= "Rscript clues_plot.R -f $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
+							push(@plot_r, "Rscript clues_plot.R -f $o_path_clues[$l]\/$ran\_$z\_CLUES$popi_out_name\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n");
 						}
 					}
 					print BASH "qsub \.\/qsub_files\/$ran\_relate_CLUES_$popi_d_names[$l]\_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\.q\n";
@@ -1104,6 +1154,15 @@ foreach my $z (1..$rc){
 	}
 	print "Sample branch lengths for CLUES\/TreeViewSamples finished. Repeat times: $z\n";
 }
+for my $k (0..$#plot_py){
+	&pbs_setting("$exc\-cj_quiet $conda\-cj_qname py_plot_file_$k -cj_sn $ran -cj_qout . $plot_py[$k]");
+	if ($clues_plot == 1){
+		&pbs_setting("$exc\-cj_quiet $conda\-cj_qname plot_R_$k -cj_sn $ran -cj_qout . $plot_r[$k]");
+	}
+}
+if ($exc){
+	&status($ran);
+}
 }
 
 sub subset_sample {
@@ -1116,6 +1175,7 @@ sub subset_sample {
 	$popi_out_name =~ s/--pop_of_interest /_/;
 	$popi_out_name =~ s/[\s\,]//g;
 	my $cnt = 1;
+	#print "debug: $o_path\n";
 	unless (-d "$o_path\/popsize"){
 		system("mkdir $o_path\/popsize");
 	}
@@ -1253,7 +1313,7 @@ sub cal_eps {
 			my $plot_year = $year;
 			$plot_year =~ s/--years_per_gen|\s+//g;
 			if ($i == 0){
-				$qout .= "Rscript plot_population_size.R $o_path\/popsize\/$ran\_popsize.pairwise $plot_year\\n";
+				$qout .= "Rscript plot_population_size_new.R $o_path\/popsize $plot_year $ran\\n";
 			}
     	}
     	if ($i > 0){
@@ -1376,7 +1436,7 @@ sub modify_poplabels {
 	}
 }
 sub usage {
-	print BOLD "Usage: perl Relate.pl -vcf VCF_FILE -pop POPULATION_LABEL_FILE -map RECOMB_MAP_FILE -al ANCESTOR_ID_LIST [-am ANC\/MUT_FOLDER_PATH] [-hap] [-o OUTPUT_PATH] [-mask MASK_FILE] [-bins LOWER,UPPER,STEPSIZE] [-rm REMOVE_SAMPLE_ID_FILE] [-pre PREFIX] [-rr] [-coal COAL_FILE] [-dps] [-clues] [-tvs] [-bp CHR\:POS-POS] [-ns INT] [-tco INT] [-pf FLOAT] [-d FLOAT] [-cp COLOR_PALETTE] [-m VALUE] [-n VALUE] [-spl VALUE] [-popi POP_NAMES] [-year VALUE] [-rp all\|clues] [-cb FILE] [-rc INT] [-epsrp INT] [--force] [-ow] [-sn SERIAL_NUMBER] [-exc] [-h]\n\n", RESET;
+	print BOLD "Usage: perl Relate_6_direct_5.pl -vcf VCF_FILE -pop POPULATION_LABEL_FILE -map RECOMB_MAP_FILE -al ANCESTOR_ID_LIST [-am ANC\/MUT_FOLDER_PATH] [-hap] [-o OUTPUT_PATH] [-mask MASK_FILE] [-bins LOWER,UPPER,STEPSIZE] [-rm REMOVE_SAMPLE_ID_FILE] [-pre PREFIX] [-rr] [-coal COAL_FILE] [-dps] [-clues] [-tvs] [-bp CHR\:POS-POS] [-ns INT] [-tco INT] [-pf FLOAT] [-d FLOAT] [-cp COLOR_PALETTE] [-m VALUE] [-n VALUE] [-spl VALUE] [-popi POP_NAMES] [-year VALUE] [-rp all\|clues] [-cb FILE] [-rc INT] [-epsrp INT] [--force] [-ow] [-sn SERIAL_NUMBER] [-mem MEMORY_IN_GB] [-exc] [-h]\n\n", RESET;
 	print "If -am is set, -vcf, -map and -al are not required.\n";
 	print "For -popi, multiple populations as an group could be indicated by \[population_1,population_2\]. Multiple independent runs can be indicated by comma as population_1,population2.\nYou can combine these two functions as [population_1,population_2],population_3\n";
 	print "The first run will be population_1\+population_2, and the second run will be population_3.\n";
