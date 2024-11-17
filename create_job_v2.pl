@@ -40,23 +40,6 @@ my $mem = 0; #set memory used for qsub job; 0 means no memory defined.
 chomp(@ARGV);
 print "This script is written by Ben Chien. Apr.2022\n";
 
-my @server = `ip route get 1.2.3.4 \| awk \'\{print \$7\}\'`;
-chomp(@server);
-my $serv = -1;
-foreach (@server){
-	if ($_ =~ /140.112.2/){
-		$serv = 2;
-		print BOLD "NTU server is detected. Set to the server\'s PBS job setting.\n\n", RESET;
-	}
-    if ($_ =~ /172.28.111/){
-		$serv = 3;
-		print BOLD "Taiwania server is detected. Set to the server\'s Slurm job setting.\n\n", RESET;
-	}
-}
-if ($serv == -1){
-	print "Cannot find the right server.\n";
-	exit;
-}
 &usage;
 if ($#ARGV == -1){
 	exit;
