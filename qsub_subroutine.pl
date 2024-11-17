@@ -95,7 +95,7 @@ foreach (@server){
 	#if ($_ =~ /<PBS_server_IP>/){ #PBS system
 	#	$serv = 1;
 	#}
-    if ($_ =~ /172.28.111/){ #Slurm system
+    if ($_ =~ /<Slurm_server_IP>/){ #Slurm system
 		$serv = 3;
 		$scr_dir = '#SBATCH';
 		$par = '-p';
@@ -108,7 +108,7 @@ foreach (@server){
 		$sppn = '--ntasks-per-node=';
 		$pname = '-A ';		
 	}
-	elsif ($_ =~ /140.112.2/) { #PBS_pro system (default)
+	elsif ($_ =~ /<PBS_pro_server_IP>/) { #PBS_pro system (default)
 		$serv = 2;
 	}
 }
