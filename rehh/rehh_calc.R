@@ -4,18 +4,19 @@ options(warn=-1)
 #library(vcfR)
 s.help <- function(){
   cat("\nThis scirpt is writtern by Ben Chien. May. 2023
-Usage: Rscript rehh_calc.R -thap THAP_FILE -map MAP_FILE -chr CHR_NAME [-pos POSITION] [-pinfo INFO_FILE] [-popi POPULATION_NAMES] [-syn] [-min MIN_BOUNDARY] [-max MAX_BOUNDARY] [-l EHH_LIMIT_VALUE] [-w WINDOW_SIZE] [-maf MIN_MAF_VALUE] [-gm GENO_MISSING_PREC] [-hm HAPLOTYPE_MISSING_PREC] [-m METHOD] [-h]\n
+Usage: Rscript rehh_calc.R -thap THAP_FILE -map MAP_FILE -chr CHR_NAME [-pos POSITION] [-pinfo INFO_FILE] [-popi POPULATION_NAMES] [-popi2 POPULATION_NAMES] [-syn] [-min MIN_BOUNDARY] [-max MAX_BOUNDARY] [-l EHH_LIMIT_VALUE] [-w WINDOW_SIZE] [-maf MIN_MAF_VALUE] [-gm GENO_MISSING_PREC] [-hm HAPLOTYPE_MISSING_PREC] [-m METHOD] [-h]\n
 -thap: thap format file.
 -map: map format file.
 -chr: chromosome/contig name.
 -pos: target position. (Numeric) (region eHH)
 -pinfo: population information. (only used in ehhs and xpehh)
 -popi: population(s) of interests. (only used in ehhs and xpehh)
+-popi2: population(s) of interests. (the comparison pair of -popi, only used in xpehh)
 -syn: indicating a synthetic F1 dataset. (only used in ehh and xpehh)
 -min: left boundary of the culculation position (bp). Necessary when -pos is set.
 -max: right boundary of the culculation position (bp). Necessary when -pos is set.
 -l: threshold value for EHH(S) calculation. (0-1) Default: 0.01
--w: window size for calculation. (genome iHS) Default: 1000
+-w: window size for calculation. (genome iHS) Default: 10000
 -maf: cutoff value for MAF. Default: 0
 -gm: missing percentage of the genotyped markers. Default: 0.15
 -hm: missing percentage of the haplotypes on genotyped markers. Default: 0.1
@@ -29,7 +30,7 @@ if (length(args) == 0){
 }
 
 thap_input <- c(); map_input <- c(); chr <- c(); w_size <- c(); rehh.method <- "ehh"
-min.expand.range <- c(); max.expand.range <- c(); sp.mrk <- c(); popi <- c()
+min.expand.range <- c(); max.expand.range <- c(); sp.mrk <- c(); popi <- c(); popi2 <- c()
 lim.ehh <- c(); min.maf <- c(); mrk.missing <- c(); geno.missing <- c()
 pinfo <- c(); syn <- 0;
 for (i in 1:length(args)){
@@ -168,6 +169,12 @@ for (i in 1:length(args)){
       popi <- c()
     }
   }
+  if (args[i] == '-popi2'){
+    popi2 <- args[i+1]
+    if (popi2 == 'all'){
+      popi2 <- c()
+    }
+  }
   if (args[i] == '-syn'){
     syn <- 1
   }
@@ -219,17 +226,21 @@ if (length(popi) != 0){
 } else {
   pname <- 'all'
 }
+if (length(popi2) != 0){
+  pname2 <- gsub(',','_',popi2)
+  pname <- paste0(pname,'_', pname2)
+}
 
 out <- sub(".thap", ".", thap_input)
-if (file.exists(paste0(out, "td_", lim.ehh, ".", pname, ".haplohh.Rdata"))){
-  load(paste0(out, "td_", lim.ehh, ".", pname, ".haplohh.Rdata"))
+if (file.exists(paste0(out, "td_", lim.ehh, ".", pname, ".haplohh.rda"))){
+  load(paste0(out, "td_", lim.ehh, ".", pname, ".haplohh.rda"))
 } else {
   gc()
   #transform vcf file and map file into haplohh format
   hap <- data2haplohh(hap_file = thap_input, map_file = map_input, haplotype.in.columns = TRUE, chr.name = chr, remove_multiple_markers = FALSE, allele_coding = "map", min_maf = NA, min_perc_geno.mrk = mrk.missing, min_perc_geno.hap = NA) #min_perc_geno.hap = geno.missing
   gc()
   #save data
-  save(hap, file = paste0(out, "td_", lim.ehh, ".", pname, ".haplohh.Rdata"))
+  save(hap, file = paste0(out, "td_", lim.ehh, ".", pname, ".haplohh.rda"))
 }
 if (length(sp.mrk) != 0 && rehh.method == "ehh"){
   sp.mrk <- paste0(chr, "_", sp.mrk)
@@ -263,7 +274,7 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
     ehh.all <- rbind(ehh.all, curr.data)
   }
   #save data
-  save(sp.ehh.sp.mrk, ehh.all, furc, center_pos, sp.mrk, file = paste0(out, "td_", lim.ehh, ".", sp.mrk, ".ehh.Rdata"))
+  save(sp.ehh.sp.mrk, ehh.all, furc, center_pos, sp.mrk, file = paste0(out, "td_", lim.ehh, ".", sp.mrk, ".ehh.rda"))
   #plot
   ehh.plot <- ggplot(ehh.all, aes(pos,EHH,color=type)) +
     geom_vline(xintercept = center_pos, linetype="dotted", color = "black", linewidth = 0.2) +
@@ -282,9 +293,11 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
           panel.border = element_rect(color = "black", fill = NA, size = 0.5),
           panel.grid = element_blank()
     ) +
-    ylim(0,1) +
-    scale_color_manual(values = col.brewer.theme) +
-    labs(x=paste0(hap.filter@chr.name, ' (Mb)'), y="EHH")
+    #ylim(0,1) +
+    scale_x_continuous(name=paste0(hap.filter@chr.name, ' (Mb)'), limits = c(x_min/1000000,x_max/1000000)) +
+    scale_y_continuous(name="EHH", limits =c(0,1)) +
+    scale_color_manual(values = col.brewer.theme)
+    #labs(x=paste0(hap.filter@chr.name, ' (Mb)'), y="EHH")
   tiff_out <- c()
   if (length(min.maf) > 0){
     tiff_out <- paste0(out, "td_", lim.ehh, ".", sp.mrk, ".", "maf_", min.maf, ".ehh.tiff")
@@ -322,21 +335,22 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
   #calculate ihs by window
   scan.ihs.window <- calc_candidate_regions(scan.ihs, window_size = w_size, pval = TRUE, threshold = 0)
   #save data without sp.ehh
-  save(scan.ihh, scan.ihs, scan.ihs.window, file = paste0(out, lim.ehh, ".Rdata"))
-  #draw distribution plot
-  if (!file.exists(paste0(out, "td_", lim.ehh, ".distrib_plot.tiff"))){
-    tiff(paste0(out, "td_", lim.ehh,".distrib_plot.tiff"), units = "cm", res = 600, width = 4, height = 4)
-    distribplot(scan.ihs[["ihs"]][["IHS"]], lty = 1, lwd = 1, col = c("#4b8bcb", "#ed3325"), qqplot = FALSE)
-    dev.off()
-  }
-  #manhattanplot
-  if (!file.exists(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"))){
-    tiff(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"), units = "cm", width = 9, height = 4)
-    manhattanplot(scan.ihs, pval = FALSE, threshold = c(-3, 3))
-    dev.off()
-  }
+  save(scan.ihh, scan.ihs, scan.ihs.window, file = paste0(out, lim.ehh, "_", chr, ".rda"))
+  # #draw distribution plot
+  # if (!file.exists(paste0(out, "td_", lim.ehh, ".distrib_plot.tiff"))){
+  #   tiff(paste0(out, "td_", lim.ehh,".distrib_plot.tiff"), units = "cm", res = 600, width = 4, height = 4)
+  #   distribplot(scan.ihs[["ihs"]][["IHS"]], lty = 1, lwd = 1, col = c("#4b8bcb", "#ed3325"), qqplot = FALSE)
+  #   dev.off()
+  # }
+  # #manhattanplot
+  # if (!file.exists(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"))){
+  #   tiff(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"), units = "cm", width = 9, height = 4)
+  #   manhattanplot(scan.ihs, pval = FALSE, threshold = c(-3, 3))
+  #   dev.off()
+  # }
 } else if (length(sp.mrk) != 0 && rehh.method == "ehhs") {
-  col.brewer.theme <- c("#4b8bcb","gold","#ed3325","#255271", "#c6b1d4", "#f7931e", "#921a1d", "#7758a5", "#f9bbb9", "#ed7f6d", "#90a7b7")
+  #col.brewer.theme <- c("#4b8bcb","gold","#ed3325","#255271", "#f7931e", "#921a1d", "#7758a5", "#f9bbb9", "#c6b1d4", "#ed7f6d", "#90a7b7")
+  col.brewer.theme <- c("#4b8bcb","gold","#ed3325","#255271", "#c6b1d4", "#921a1d", "#7758a5", "#f9bbb9", "#c6b1d4", "#ed7f6d", "#90a7b7")
   sp.mrk <- paste0(chr, "_", sp.mrk)
   ehhs.pop <- c()
   if (length(pinfo) != 0){
@@ -376,7 +390,7 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
       mutate(type = ehhs.pop[i])
     ehhs.all <- rbind(ehhs.all, curr.data)
   }
-  save(ehhs.all, center_pos, ehhs.pop, pinfo, sp.mrk, file = paste0(out, "td_", lim.ehh, ".", sp.mrk, ".", pname, ".ehhs.Rdata"))
+  save(ehhs.all, center_pos, ehhs.pop, pinfo, sp.mrk, file = paste0(out, "td_", lim.ehh, ".", sp.mrk, ".", pname, ".ehhs.rda"))
   ehhs.all$type <- factor(ehhs.all$type, levels = c("JP_LR","CN_LRN","CN_LRS","JP_WL","SOUTH_LR"))
   ehhs.plot <- ggplot(ehhs.all, aes(pos,NEHHS,color=type)) +
     geom_vline(xintercept = center_pos, linetype="dotted", color = "black", linewidth = 0.2) +
@@ -392,13 +406,15 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
           axis.text = element_text(color = "black", size = 7.5),
           axis.title.x = element_text(color = "black", size = 7.5),
           axis.title.y = element_text(color = "black", size = 7.5),
-          legend.key.size = unit(0.3, 'cm'),
           panel.border = element_rect(color = "black", fill = NA, size = 0.5),
           panel.grid = element_blank()
     ) +
-    ylim(0,1) +
-    scale_color_manual(values = col.brewer.theme) +
-    labs(x=paste0(hap.subset@chr.name, ' (Mb)'), y="EHHS")
+    scale_x_continuous(name=paste0(hap.subset@chr.name, ' (Mb)'), breaks = seq(round(x_min/1000000, digits = 2),round(x_max/1000000, digits = 2),0.02)) +
+    #scale_x_continuous(name=paste0(hap.subset@chr.name, ' (Mb)')) +
+    scale_y_continuous(name="EHHS", limits =c(0,1)) +
+    #ylim(0,1) +
+    scale_color_manual(values = col.brewer.theme)
+    #labs(x=paste0(hap.subset@chr.name, ' (Mb)'), y="EHHS")
   tiff_out <- c()
   if (length(min.maf) > 0){
     tiff_out <- paste0(out, "td_", lim.ehh, ".", sp.mrk, ".", "maf_", min.maf, ".", pname,".ehhs.tiff")
@@ -413,26 +429,91 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
     w_size <- 10000
   }
   message("Calculating XP-EHH of the genome...")
+  ehhs.pop <- c()
+  ehhs.pop2 <- c()
+  if (length(pinfo) != 0){
+    pinfo <- read.table(pinfo, header = F)
+    pinfo.col <- c()
+    if (ncol(pinfo) == 1){
+      pinfo <- cbind(pinfo, rep('all', nrow(pinfo)))
+      pinfo.col <- 2
+    } else if (syn == 0){
+      pinfo.col <- 2
+    } else {
+      pinfo.col <- 4
+    }
+    colnames(pinfo)[pinfo.col] <- "pop"
+    if (length(popi) != 0){ #setup population if -popi exist
+      ehhs.pop <- unlist(strsplit(popi, ','))
+      ehhs.pop2 <- unlist(strsplit(popi2, ','))
+    } else { #calculate all populations one by one
+      ehhs.pop <- unique(pinfo[,pinfo.col])
+      ehhs.pop2 <- unique(pinfo[,pinfo.col])
+    }
+  } else { #no sample list provided
+    ehhs.pop <- "all"
+    ehhs.pop2 <- "all"
+  }
+  hap.subset.all <- c()
+  hap.subset2.all <- c()
+  if (ehhs.pop[1] != "all"){ #subset by population if pinfo exist
+    curr.pinfo <- pinfo[pinfo$pop %in% ehhs.pop,]
+    idx <- c(as.integer(rownames(curr.pinfo))*2 - 1, as.integer(rownames(curr.pinfo))*2)
+    idx <- sort(idx)
+    hap.subset <- subset(hap, select.hap = idx, min_perc_geno.hap = geno.missing, min_maf = min.maf, min_perc_geno.mrk = mrk.missing)
+    curr.pinfo2 <- pinfo[pinfo$pop %in% ehhs.pop2,]
+    idx2 <- c(as.integer(rownames(curr.pinfo2))*2 - 1, as.integer(rownames(curr.pinfo2))*2)
+    idx2 <- sort(idx2)
+    hap.subset2 <- subset(hap, select.hap = idx2, min_perc_geno.hap = geno.missing, min_maf = min.maf, min_perc_geno.mrk = mrk.missing)
+  } else { #no pinfo, use all haps
+    hap.subset <- subset(hap, min_perc_geno.hap = geno.missing, min_maf = min.maf, min_perc_geno.mrk = mrk.missing)
+    hap.subset2 <- subset(hap, min_perc_geno.hap = geno.missing, min_maf = min.maf, min_perc_geno.mrk = mrk.missing)
+  }
+  #hap.subset.all <- rbind(hap.subset.all, hap.subset)
+  #hap.subset.all2 <- rbind(hap.subset.all2, hap.subset2)
+  
   #scan iES of the genome
-  scan.ies <- scan_hh(hap, limhaplo = 2, limhomohaplo = 2, limehh = lim.ehh, limehhs = lim.ehh, phased = TRUE, polarized = TRUE)
+  if (!file.exists(paste0(out, pname, "_", chr,"_scan_hh_xpehh.rda"))){
+    scan.ies <- scan_hh(hap.subset, limhaplo = 2, limhomohaplo = 2, limehh = lim.ehh, limehhs = lim.ehh, phased = TRUE, polarized = TRUE)
+    scan.ies2 <- scan_hh(hap.subset2, limhaplo = 2, limhomohaplo = 2, limehh = lim.ehh, limehhs = lim.ehh, phased = TRUE, polarized = TRUE)
+    save(scan.ies, scan.ies2, lim.ehh, min.maf, w_size, ehhs.pop, ehhs.pop2, file = paste0(out, pname, "_", chr,"_scan_hh_xpehh.rda"))
+  } else {
+    load(paste0(out, pname, "_", chr,"_scan_hh_xpehh.rda"))
+  }
   #convert ies to ihs
-  scan.ihs <- ihh2ihs(scan.ihh, freqbin = 0, min_maf = min.maf)
-  #calculate ihs by window
-  scan.ihs.window <- calc_candidate_regions(scan.ihs, window_size = w_size, pval = TRUE, threshold = 0)
-  #save data without sp.ehh
-  save(hap, scan.ihh, scan.ihs, scan.ihs.window, file = paste0(out, lim.ehh, ".Rdata"))
-  #draw distribution plot
-  if (!file.exists(paste0(out, "td_", lim.ehh, ".distrib_plot.tiff"))){
-    tiff(paste0(out, "td_", lim.ehh,".distrib_plot.tiff"), units = "cm", res = 600, width = 4, height = 4)
-    distribplot(scan.ihs[["ihs"]][["IHS"]], lty = 1, lwd = 1, col = c("#4b8bcb", "#ed3325"), qqplot = FALSE)
-    dev.off()
+  if (!file.exists(paste0(out, pname, "_", chr,"_xpehh.rda"))){
+    if (!file.exists(paste0(out, pname, "_", chr,"_ihs.rda"))){
+      scan.ihs <- ihh2ihs(scan.ies, freqbin = 0, min_maf = min.maf)
+      scan.ihs2 <- ihh2ihs(scan.ies2, freqbin = 0, min_maf = min.maf)
+      save(scan.ihs, scan.ihs2, file = paste0(out, pname, "_", chr,"_ihs.rda"))
+    } else {
+      load(paste0(out, pname, "_", chr,"_ihs.rda"))
+    }
+    #calculate ihs by window
+    # if (!file.exists(paste0(out, pname, "_", chr,"_window_ihs.rda"))){
+    #   scan.ihs.window <- calc_candidate_regions(scan.ihs, window_size = w_size, pval = TRUE, threshold = 0)
+    #   scan.ihs.window2 <- calc_candidate_regions(scan.ihs2, window_size = w_size, pval = TRUE, threshold = 0)
+    #   save(scan.ihs.window, scan.ihs.window2, file = paste0(out, pname, "_", chr,"_window_ihs.rda"))
+    # } else {
+    #   load(paste0(out, pname, "_", chr,"_window_ihs.rda"))
+    # }
+    #calculate XP-EHH
+    xp.ehh <- ies2xpehh(scan.ihs, scan.ihs2, ehhs.pop, ehhs.pop2)
+    #save data without sp.ehh
+    save(xp.ehh, file = paste0(out, pname,"_xpehh.rda"))
   }
-  #manhattanplot
-  if (!file.exists(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"))){
-    tiff(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"), units = "cm", res = 600, width = 9, height = 4)
-    manhattanplot(scan.ihs, pval = FALSE, threshold = c(-3, 3))
-    dev.off()
-  }
+  # #draw distribution plot
+  # if (!file.exists(paste0(out, "td_", lim.ehh, ".distrib_plot.tiff"))){
+  #   tiff(paste0(out, "td_", lim.ehh,".distrib_plot.tiff"), units = "cm", res = 600, width = 4, height = 4)
+  #   distribplot(scan.ihs[["ihs"]][["IHS"]], lty = 1, lwd = 1, col = c("#4b8bcb", "#ed3325"), qqplot = FALSE)
+  #   dev.off()
+  # }
+  # #manhattanplot
+  # if (!file.exists(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"))){
+  #   tiff(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"), units = "cm", res = 600, width = 9, height = 4)
+  #   manhattanplot(scan.ihs, pval = FALSE, threshold = c(-3, 3))
+  #   dev.off()
+  # }
 }
 
 
