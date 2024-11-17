@@ -49,7 +49,8 @@ save(post.exp, y.max, color.series, fig_width, fig_height, file = rda)
 
 fig <- ggplot(post.exp, aes(x=Time, y=Frequency, fill=value)) + 
   geom_tile() +
-  geom_line(data = y.max, aes(x = x, y = as.numeric(y)), color = "black", inherit.aes = FALSE, linewidth = 0.2) +
+  #geom_line(data = y.max, aes(x = x, y = as.numeric(y)), color = "black", inherit.aes = FALSE, linewidth = 0.2) +
+  geom_line(data = y.max, aes(x = x, y = as.numeric(y)), color = "black", inherit.aes = FALSE, size = 0.2) +
   #geom_smooth(data = y.max, aes(x = x, y = as.numeric(y)), color = "black", method = "gam", inherit.aes = FALSE, linewidth = 0.5) +
   scale_fill_distiller(palette = color.series, 
                        direction = 1,
@@ -64,7 +65,7 @@ fig <- ggplot(post.exp, aes(x=Time, y=Frequency, fill=value)) +
                                                title.hjust = 0.5)
                        ) +
   scale_x_continuous(expand = c(0,0)) +
-  scale_y_continuous(expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0), breaks = c(0,0.2,0.4,0.6,0.8,1)) +
   theme(aspect.ratio = 1,
         panel.background = element_blank(),
         text = element_text(face = "bold", size = round(4*min(c(fig_width, fig_height), na.rm = T), digits = 0)),
