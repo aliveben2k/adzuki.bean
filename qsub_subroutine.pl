@@ -95,7 +95,7 @@ foreach (@server){
     	if ($_ =~ /<PBS_server_IP>/){ #PBS system
 		$serv = 1;
     	}
-    	if ($_ =~ /<Slurm_server_IP>/){ #Slurm system
+    	elsif ($_ =~ /<Slurm_server_IP>/){ #Slurm system
 		$serv = 3;
 		$scr_dir = '#SBATCH';
 		$par = '-p';
