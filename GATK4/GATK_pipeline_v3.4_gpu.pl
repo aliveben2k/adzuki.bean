@@ -41,7 +41,7 @@
 #-kp: keep user defined samples only when processing step 6.
 #-lc: run the pipeline locally
 #-ignc: ignore checking if input file numbers and gvcf file numbers are matched.
-#-gpu: use GPU version of gatk4 (only work for NARO server)
+#-gpu: use GPU version of gatk4
 
 
 use Cwd qw(getcwd);
@@ -60,8 +60,8 @@ else {
 
 my $p_ver = "3.4"; #this perl script version
 
-print "GATK_pipeline v.$p_ver\nThe script is written by Ben Chien. 2023.05.\n";
-print BOLD "Usage: perl GATK_pipeline.pl \(gatk3\) -p PATH -r REFERENCE_FILE [-g GROUP_NAME][-rad][-wes][-cnv][-sp START_STEP][-esp END_STEP][-adp ADAPTER_FILE][-db DB_PATH][--list LIST_FILE][-f FILTERED_VCF_FOLDER_PATH][-sn SERIAL_NUMBER][-prx SELECTED_VCF_FOLDER][-pox LIST.args][-ps LIST.args][-mmc INT][-mm FLOAT][-maf FLOAT][-mq INT][-pfdp PREFIX][-kp LIST.txt][-l FILE][-ip INT][-proj PROJECT_ID][-res FILE][-an NAME][-vqsr][-x][-s][-a][-q][-c][-gv][-gvc][-ow][-as][-pf][-sf][-exc][-bao][-wi][-lc][-gpu]\n", RESET;
+print "GATK_pipeline v.$p_ver\nThe script is written by Ben Chien. 2024.11.\n";
+print BOLD "Usage: perl GATK_pipeline_v$p_ver\_gpu.pl \(gatk3\) -p PATH -r REFERENCE_FILE [-g GROUP_NAME][-rad][-wes][-cnv][-sp START_STEP][-esp END_STEP][-adp ADAPTER_FILE][-db DB_PATH][--list LIST_FILE][-f FILTERED_VCF_FOLDER_PATH][-sn SERIAL_NUMBER][-prx SELECTED_VCF_FOLDER][-pox LIST.args][-ps LIST.args][-mmc INT][-mm FLOAT][-maf FLOAT][-mq INT][-pfdp PREFIX][-kp LIST.txt][-l FILE][-ip INT][-proj PROJECT_ID][-res FILE][-an NAME][-vqsr][-x][-s][-a][-q][-c][-gv][-gvc][-ow][-as][-pf][-sf][-exc][-bao][-wi][-lc][-gpu]\n", RESET;
 print "For detail functions, please read \"Manual of GATK_pipeline.\"\n";
 print RED "IMPORTANT: \*.g.vcf.gz files are incompatible between GATK3 and GATK4. However, \*.bam files are compatible.\n\n", RESET;
 #print "GATK4 is highly recommend, many bugs are fixed with this pipeline.\n\n";
