@@ -5,11 +5,16 @@ library(ggplot2)
 file.open <- c()
 path <- c()
 npsi <- c()
+args <- commandArgs(trailingOnly = TRUE)
 for (i in 1:length(args)){
   if (args[i] == '-f'){
     file.open <- as.character(args[i+1]) #final_all_loci.broken.stick.rda
-    path.tmp <- unlist(strsplit(file.open,"/|\\\\"))
-    path <- paste0(path.tmp[1:(length(path.tmp)-1)], collapse = "/")
+    if (grepl("/|\\\\", file.open)){
+      path.tmp <- unlist(strsplit(file.open,"/|\\\\"))
+      path <- paste0(path.tmp[1:(length(path.tmp)-1)], collapse = "/")
+    } else {
+      path <- "."
+    }
   }
   if (args[i] == '-n'){
     npsi <- as.numeric(args[i+1])
