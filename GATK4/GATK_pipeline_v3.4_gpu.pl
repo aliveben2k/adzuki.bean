@@ -536,7 +536,7 @@ if ($sp =~ /p/){
 if ($wes == 1){
 	$ns = "1";
 	$alter = "0";
-	$c = "1";
+	$c = "1"; #use combineGVCFs
 	unless ($interval){
 		print BOLD "\[$time\]\: ERROR\: -l should be set when using -wes.", RESET, "\n";
 		exit;
@@ -564,13 +564,15 @@ if ($vqsr == 1){
 }
 
 #check -d argument if -db is set
+=start
 if ($c eq "1"){
-	if ($dbseq eq "1" || $wes != 1 || $gpu != 1){
+	if ($dbseq eq "1" || $wes != 1){
 		print RED "\[$time\]\: WARNING\: \-db is set, but \-d is not set.\n", RESET;
 		print RED "\[$time\]\: Switch to \-d mode.\n", RESET;
 		$c = "0";
 	}
 }
+=cut
 
 #check coexistance of -prx/-prn or -pox/-pon
 my $svsn1 = "\-xl\-sn";
@@ -2094,7 +2096,7 @@ sub raw_gvcf {
 			my $return = &pbs_setting("$proj$exc$local\-cj_quiet -cj_ppn 2 -cj_mem 60 -cj_qname gatk_02_$cnt -cj_sn $ran -cj_qout . $out");
 			print BASH "$return\n";
 		}
-		print "debug: $cnt\n";
+		#print "debug: $cnt\n";
 		$stp = "0"; @temp = ();
 	}
 	unless ($local){
@@ -2239,7 +2241,7 @@ sub gpu_gvcf {
 		}
 		if ($rad eq "0"){
 		    unless (-e "$path\/$temp[0]_aln_sort_MD.bam"){
-			    $out = "pbrun fq2bam --ref $ref $L$f_l$IP\--out-bam $path\/$temp[0]_aln_sort_MD.bam --num-gpus 4\\n";
+			    $out = "pbrun fq2bam --ref $ref $L$f_l$IP\--out-bam $path\/$temp[0]_aln_sort_MD.bam --num-gpus 4 --low-memory\\n";
 			}
 			else {
 			    if ($ng eq "0"){
@@ -2253,7 +2255,7 @@ sub gpu_gvcf {
 		}
 		elsif ($rad eq "1"){
 		    unless (-e "$path\/$temp[0]_aln_sort.bam"){
-			    $out = "pbrun fq2bam --ref $ref --no-markdups $L$f_l$IP\--out-bam $path\/$temp[0]_aln_sort.bam --num-gpus 4\\n";
+			    $out = "pbrun fq2bam --ref $ref --no-markdups $L$f_l$IP\--out-bam $path\/$temp[0]_aln_sort.bam --num-gpus 4 --low-memory\\n";
 			}
 			else {
 			    if ($ng eq "0"){
@@ -2293,7 +2295,7 @@ sub gpu_gvcf {
 		}
 		if ($out =~ /[a-z]/ig){
 			$cnt += 1;
-			my $return = &pbs_setting("$proj$exc$local\-cj_quiet -cj_docker nvcr-clara-parabricks-4311 -cj_gpu 4 -cj_time 168\:0\:0 -cj_qname gatk_02_$cnt -cj_sn $ran -cj_qout . $out");
+			my $return = &pbs_setting("$proj$exc$local\-cj_quiet -cj_docker nvcr-clara-parabricks-4401 -cj_gpu 4 -cj_time 168\:0\:0 -cj_qname gatk_02_$cnt -cj_sn $ran -cj_qout . $out");
 			print BASH "$return\n";
 		}
 		unless ($ng eq "1"){
@@ -3723,6 +3725,8 @@ sub GenotypeGVCFs_4 {
 	my $folder = shift; my $exc = shift; my $path_o = shift; my $ref = shift; my $pre = shift; my $DB_path = shift; my $as = shift; my $local = shift; my $gpu = shift;
 	my $time = scalar localtime();
 	my @chrs; my $v; my $folder_out; my $gz_back;
+	#it's not working for gpu right now, because the genotypgvcf in parabricks is not supported yet.
+	$gpu = 0;
 	if ($gpu == 1){
 	    if ($pxlsn ne "0" || $xlsn ne "0"){
             print RED "\[$time\]\: WARNING\: -prx or -pox cannot be used when -gpu is used.", RESET, "\n";
@@ -3925,7 +3929,15 @@ sub GenotypeGVCFs_4 {
 			if (-e "$folder_out\/vcf_raw_$chr\.vcf\.gz"){}
 			else {
 			    if ($gpu == 1){
-			        $out .= "pbrun genotypegvcf \--ref $ref \--in-gvcf $v \--out-vcf $folder_out\/vcf_raw_$chr\.vcf\.gz\\n";
+			        $out .= "pbrun genotypegvcf \--ref $ref \--in-gvcf $v \--out-vcf $folder_out\/vcf_raw_$chr\.vcf --num-threads 32\\n";
+			        $out .= "bgzip $folder_out\/vcf_raw_$chr\.vcf\\n";
+			        if ($as == 1){
+			            $out .= "awk -v OFS\=\"\\t\" \'\{print \$1\, 0\, \$2\}\' $ref.fai \> $ref.bed\\n";
+			            $out .= "bcftools mpileup --threads 32 -f $ref --regions-file $ref.bed -Ou $folder_out\/vcf_raw_$chr\.vcf \| bcftools call --threads 32 --ploidy 2 -m -o $folder_out\/vcf_raw_$chr\.vcf\.gz\\n";
+			            $out .= "bcftools merge -R $ref.bed --missing-to-ref -f PASS -Oz -o $folder_out\/vcf_raw_$chr\.allsites.vcf\.gz $folder_out\/vcf_raw_$chr\.vcf\.gz\\n";
+			            $out .= "mv $folder_out\/vcf_raw_$chr\.allsites.vcf\.gz $folder_out\/vcf_raw_$chr\.vcf\.gz\\n";
+			        }
+			        $out .= "tabix $folder_out\/vcf_raw_$chr\.vcf\.gz\\n";
 			    }
 			    else {
 				    $out .= "$pre_t\$gatk2 \-\-java\-options \"\-Xmx60g \-XX\:ParallelGCThreads=4\" GenotypeGVCFs \-R $ref \-V $v \-O $folder_out\/vcf_raw_$chr\.vcf\.gz \-\-sequence\-dictionary $dict $as$IP$L\\n";
@@ -3935,7 +3947,15 @@ sub GenotypeGVCFs_4 {
 		elsif (-e "$folder\/vcf_raw_$chr\.vcf\.gz"){}
 		else {
 		    if ($gpu == 1){
-		        $out .= "pbrun genotypegvcf \--ref $ref \--in-gvcf $v \--out-vcf $folder\/vcf_raw_$chr\.vcf\.gz\\n";
+		        $out .= "pbrun genotypegvcf \--ref $ref \--in-gvcf $v \--out-vcf $folder\/vcf_raw_$chr\.vcf --num-threads 32\\n";
+		        $out .= "bgzip $folder\/vcf_raw_$chr\.vcf\\n";
+			    if ($as == 1){
+			        $out .= "awk -v OFS\=\"\\t\" \'\{print \$1\, 0\, \$2\}\' $ref.fai \> $ref.bed\\n";
+			        $out .= "bcftools mpileup --threads 32 -f $ref --regions-file $ref.bed -Ou $folder\/vcf_raw_$chr\.vcf \| bcftools call --threads 32 --ploidy 2 -m -o $folder\/vcf_raw_$chr\.vcf\.gz\\n";
+			        $out .= "bcftools merge -R $ref.bed --missing-to-ref -f PASS -Oz -o $folder\/vcf_raw_$chr\.allsites.vcf\.gz $folder\/vcf_raw_$chr\.vcf\.gz\\n";
+			        $out .= "mv $folder\/vcf_raw_$chr\.allsites.vcf\.gz $folder\/vcf_raw_$chr\.vcf\.gz\\n";
+			    }
+		        $out .= "tabix $folder\/vcf_raw_$chr\.vcf\.gz\\n";
 		    }
 		    else {
 			    $out .= "$pre_t\$gatk2 \-\-java\-options \"\-Xmx60g \-XX\:ParallelGCThreads=4\" GenotypeGVCFs \-R $ref \-V $v \-O $folder\/vcf_raw_$chr\.vcf\.gz \-\-sequence\-dictionary $dict $as$IP$L\\n";
@@ -3960,7 +3980,7 @@ sub GenotypeGVCFs_4 {
 		}
 		my $return;
 		if ($gpu == 1){
-		    $return = &pbs_setting("$proj$exc$local\-cj_quiet -cj_docker nvcr-clara-parabricks-4311 -cj_time 168\:0\:0 -cj_gpu 4 -cj_qname gatk_04_$chr -cj_sn $ran -cj_qout . $out");
+		    $return = &pbs_setting("$proj$exc$local\-cj_quiet -cj_docker nvcr-clara-parabricks-4401 -cj_time 168\:0\:0 -cj_gpu 4 -cj_qname gatk_04_$chr -cj_sn $ran -cj_qout . $out");
 		}
 		else {
 		    $return = &pbs_setting("$proj$exc$local\-cj_quiet -cj_ppn 4 -cj_mem 60 -cj_qname gatk_04_$chr -cj_sn $ran -cj_qout . $out");
