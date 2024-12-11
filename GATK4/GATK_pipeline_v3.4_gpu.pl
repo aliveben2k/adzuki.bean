@@ -589,12 +589,14 @@ elsif ($posn ne "0"){
 }
 
 #check if -gpu is set
+=start
 if ($gpu == 1){
     $c = "1";
     $pxlsn = "0";
     $xlsn = "0";
     $dstr = "0";
 }
+=cut
 
 #check step 6 arguments
 if ($mmc ne "0"){
@@ -681,7 +683,7 @@ $dict =~ s/fasta$|fas$|fa$/dict/g;
 if ($sp =~ /2s|2p|3s|3p|4s|4p/){
 	unless (-e "$ref\.fai" && -e $dict){
 		$time = scalar localtime();
-		$ref = &ref_ind($proj, $bwa, $ran, $gk3, $ref, $alter, $exc);
+		$ref = &ref_ind($proj, $bwa, $ran, $gk3, $ref, $alter, $exc, $gpu);
 		if ($exc){
 			unless ($local){
 				&status($ran);
