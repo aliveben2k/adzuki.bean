@@ -110,6 +110,8 @@ for (my $i=0; $i<=$#ARGV; $i++){
         if (-d $ARGV[$i+1]){
             if ($ARGV[$i+1] =~ /\/$/){
                 $ARGV[$i+1] =~ s/\/$//;
+            }
+            if ($ARGV[$i+1] =~ /\//){
                 $path = $ARGV[$i+1];
             }
             else {
@@ -141,6 +143,7 @@ for (my $i=0; $i<=$#ARGV; $i++){
                 $path = ".";
             }
 			$path = &check_path_Relate($path);
+			@vcfs = grep {!/\.relate\.|\.NumericChr\./} @vcfs;
         }
         else {
             die "Cannot find the vcf\(s\). The input must be a folder contains seperated vcfs or a list file.\n";
