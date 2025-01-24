@@ -15,6 +15,7 @@ For self-pollinating plant data, please use -self argument. Otherwise, you need 
 If you prefer to use synthetic F1 for self-pollinating plant data, please use -syn argument, and prepare a synthetic list file. (see “syn_F1_list.txt” for format.)
 
 **IMPORTANT
+If you want to use CLUES2, please download it from https://github.com/avaughn271/CLUES2 (this is not included in the Relate package). After downloading, please put the folder under the Relate folder and rename the folder name as "clues".
 When choosing the type of data using -syn/-self/-hap, please only use one of them. If you don’t use any of these, it will assume that your data is normal diploid data.
 When -syn is set, -pop cannot be set. Otherwise, please set -pop.
 
