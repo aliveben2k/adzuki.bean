@@ -15,8 +15,8 @@ elsif (-e "$home\/qsub_subroutine.pl"){
 
 #please set the python3 and the bedtools environments path here
 #otherwise the server cannot find the program
-my $env = '-cj_env $HOME/miniconda3/envs/R-4.1/bin ';
-my $bedtool = '-cj_env $HOME/miniconda3/envs/bedtools/bin ';
+my $env = '-cj_conda R-4.4 ';
+my $bedtool = '-cj_conda bedtools ';
 
 my @server = `ip addr`;
 chomp(@server);
@@ -41,7 +41,7 @@ print "Input command line:\n";
 print "perl msmc_v5.pl @ARGV\n\n";
 
 my @vcfs; my @pop_list; my $ran; my $exc; my $mask; my $ow = 0; my $sn; my $debug = 0;
-my $sf = 1; my $o_path; my $syn; my $psa; my $rand; my $pop_list_f; my $synnum = 2; my @rns;
+my $o_path; my $syn; my $psa; my $rand; my $pop_list_f; my $synnum = 2; my @rns;
 my $p_dir = $FindBin::Bin; my $out;
 unless ($p_dir){
 	$p_dir = ".";
@@ -110,9 +110,6 @@ for (my $i=0; $i<=$#ARGV; $i++){
 	if ($ARGV[$i] eq "\-debug"){
 		$debug = 1;
 	}
-	#if ($ARGV[$i] eq "\-f"){ #extra filtering
-	#	$sf = 0;
-	#}
 	if ($ARGV[$i] eq "\-pre"){
 		$pre = $ARGV[$i+1];
 	}
@@ -145,7 +142,7 @@ for (my $i=0; $i<=$#ARGV; $i++){
 		}
 	}
 	if ($ARGV[$i] eq "\-mu"){
-		if ($ARGV[$i+1] !~ /[^0-9e\-]/){
+		if ($ARGV[$i+1] !~ /[^0-9e\-\.]/){
 			$mu = $ARGV[$i+1];
 		}
 		else {
@@ -205,18 +202,7 @@ for (my $i=0; $i<=$#ARGV; $i++){
         }
     }
 }
-=start
-if ($sf == 1){
-	my @tmp_vcfs = grep{/filtered/} @vcfs;
-	if (@tmp_vcfs){
-		@vcfs = @tmp_vcfs;
-	}
-	else {
-		print BOLD "Cannot find the filtered vcf file.\n", RESET;
-		exit;
-	}
-}
-=cut
+
 unless (@vcfs){
 	print BOLD "Cannot find the input vcf file.\n", RESET;
 	exit;
@@ -244,7 +230,6 @@ elsif (-e "my_bash_msmc_1_$ran\.sh" && $sn != 1){
 print "The qsub SN is: $ran\n";
 
 my @chr_n = &chr_name($vcfs[0], $pre); #get chromosome name
-
 #handling mask files
 if (-e $mask){
 	my $mask_out;
@@ -260,7 +245,7 @@ if (-e $mask){
 			$out = "bedtools sort -i $mask \| bgzip -\@ $thread -c \> $out_gff\\n";
 			$out .= "bedtools merge -i $out_gff \| bgzip -\@ $thread -c \> $mask_out\\n";
 			$out .= "tabix $mask_out\\n";
-			&pbs_setting("$exc$proj$bedtool\-cj_quiet -cj_conda bedtools -cj_qname msmc_mask -cj_sn $ran -cj_qout . $out");
+			&pbs_setting("$exc$proj$bedtool\-cj_quiet -cj_qname msmc_mask -cj_sn $ran -cj_qout . $out");
 			$out = "";
 		}
 	}
@@ -274,7 +259,7 @@ if (-e $mask){
 			$out .= "bedtools merge -i $tmp_bed \| bgzip -\@ $thread -c \> $mask_out\\n";
 			$out .= "rm $tmp_bed\\n";
 			$out .= "tabix $mask_out\\n";
-			&pbs_setting("$exc$proj$bedtool\-cj_quiet -cj_ppn $thread -cj_conda bedtools -cj_qname msmc_mask -cj_sn $ran -cj_qout . $out");
+			&pbs_setting("$exc$proj$bedtool\-cj_quiet -cj_ppn $thread -cj_qname msmc_mask -cj_sn $ran -cj_qout . $out");
 			$out = "";
 		}
 	}
@@ -461,7 +446,7 @@ for my $z (1..$rand){
 			push(@in_beds, "\-\-mask $o_path\/$s_name\.$s_pop\.msmc$syn\.$chr_name\.sorted\.bed\.gz");
 			if ($out){
 				print BASH "qsub \.\/qsub_files\/$ran\_msmc_2_$cnt\.q\n";
-				&pbs_setting("$exc$proj$bedtool\-cj_quiet -cj_ppn $thread -cj_conda bedtools -cj_qname msmc_2_$cnt -cj_sn $ran -cj_qout . $out");
+				&pbs_setting("$exc$proj$bedtool\-cj_quiet -cj_ppn $thread -cj_qname msmc_2_$cnt -cj_sn $ran -cj_qout . $out");
 				$out = "";
 			}
 			$cnt++;
@@ -497,6 +482,7 @@ for my $z (1..$rand){
 	do {
 		for (my $x=1; $x<=$#pops; $x++){
 			my $pop1_alleles; my $pop2_alleles;
+			#print "debug: $pops[$x]\n";
 			foreach (@chr_n){
 				if ($_ eq "0"){
 					next;
@@ -526,6 +512,7 @@ for my $z (1..$rand){
 					$chr_mask =~ s/bed\.gz$/$_.bed.gz/;
 					$chr_mask = "\-\-negative_mask $chr_mask ";
 				}
+				#print "debug: $o_path\/$pops[0]\_$pops[$x]\.$_\.msmc_input\.txt\n";
 				unless (-e "$o_path\/$pops[0]\_$pops[$x]\.$_\.msmc_input\.txt" && $ow == 0){
 					my @comCCs = `find \$pwd \-iname \'generate_multihetsep.py\' \-type f`;
 					chomp(@comCCs);
