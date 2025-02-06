@@ -32,18 +32,44 @@ x.mark <- function(x) {
   return(y)
 }
 
-det.range <- function(col.x = NULL, col.y = NULL, point = 0.5, side = "left") {
-  minus <- length(col.x)
+min.idx <- function(col.y = NULL, point = 0.5) {
+  for (a in 1:length(col.y)){ #get index of the max.y
+    minus <- length(col.y) - a + 1
+    if (col.y[minus] < point){
+      return(minus)
+      break
+    }
+  }
+}
+
+max.idx <- function(col.y = NULL) {
   max.y <- max(col.y, na.rm = T)
-  meet.one <- 0
+  meet.one.idx <- 1
+  for (a in 1:length(col.y)){ #get index of the max.y
+    if (col.y[a] == max.y){
+      meet.one.idx <- a
+      break
+    }
+  }
+  return(meet.one.idx)
+}
+
+det.range <- function(col.x = NULL, col.y = NULL, point = 0.5, side = "left") {
+  #minus <- length(col.x)
+  max.y <- max(col.y, na.rm = T)
+  meet.one.idx <- 1
   sep.side.x <- c()
   sep.side.y <- c()
-  for (a in 1:length(col.x)){
-    if (col.y[minus] == max.y){
-      meet.one <- 1
+  for (a in 1:length(col.x)){ #get index of the max.y
+    if (col.y[a] == max.y){
+      meet.one.idx <- a
+      break
     }
-    if (col.y[minus] < point && meet.one == 1){
-      if (side == "right"){
+  }
+  for (b in 1:meet.one.idx){
+    minus <- meet.one.idx - b + 1 #looking for range from the last row back to the first row
+    if (col.y[minus] < point){
+      if (side == "right" && minus < length(col.y)){
         sep.side.x <- col.x[minus+1]
         sep.side.y <- col.y[minus+1]
       } else {
@@ -52,7 +78,7 @@ det.range <- function(col.x = NULL, col.y = NULL, point = 0.5, side = "left") {
       }
       break
     }
-    minus <- minus-1
+    #minus <- minus-1
   }
   return(c(sep.side.x, sep.side.y))
 }
@@ -63,9 +89,10 @@ mu_out <- as.character(mu)
 gen <- as.numeric(args[2]) #generation time
 random <- as.character(args[3]) #serial number/identifier
 path <- sub("/$|\\\\$", "", args[4]) #folder path containing input files
-indv.show = 0
-if (length(args[5]) > 0){ #show individual lines in rccr figures
-  indv.show = 1
+invis <- as.numeric(args[5])
+indv.show <- 0
+if (invis == 1){ #show individual lines in rccr figures
+  indv.show <- 1
 }
 
 dirs <- list.dirs(path, full.names = T, recursive = T)
@@ -86,7 +113,6 @@ if (length(files) == 0){
 }
 
 rccr.plots <- list()
-rccr.tables <- list()
 range.box <- list()
 for (i in 1:length(files)){
   #get the population name
@@ -136,6 +162,7 @@ for (i in 1:length(files)){
   # all.names <- c("CN_LRN","CN_WL","JP_LR","JP_WL","SOUTH_WL1","SOUTH_WL2")
   # all.limit <- c(50000, 140000, 50000, 80000, 1000000, 1000000)
   # all.limit <- log10(all.limit)
+  # x.max.1 <- c(); x.max.2 <- c()
   # for (z in 1:length(all.names)){
   #   if (pop.name.1 == all.names[z]){
   #     x.max.1 <- all.limit[z]
@@ -151,6 +178,8 @@ for (i in 1:length(files)){
   # rccr.table$upper.bound <- rccr.table$upper.bound/tmp.y.max
   # rccr.table$lower.bound <- rccr.table$lower.bound/tmp.y.max
   ##end of optional code
+  y.max.idx <- max.idx(col.y = rccr.table$mean.y)
+  rccr.table <- rccr.table[c(1:y.max.idx),]
   start.row.idx <- as.numeric(rownames(rccr.table)[1]) #get the start, end, max-mean.y time frames
   end.row.idx <- as.numeric(rownames(rccr.table)[nrow(rccr.table)])
   max.mean.y.idx <- as.numeric(rownames(rccr.table)[which(rccr.table$mean.y == 1)])
@@ -159,25 +188,30 @@ for (i in 1:length(files)){
   }
   mid.point <- 0.5
   mid.start <- 0.8
+  #det.range <- function(col.x = NULL, col.y = NULL, point = 0.5, side = "left")
   sep.start <- det.range(col.x = rccr.table$mean.x.left, col.y = rccr.table$mean.y, point = mid.start, side = "right")
   sep.point <- det.range(col.x = rccr.table$mean.x.left, col.y = rccr.table$mean.y, point = mid.point, side = "left")
   sep.start.ci.upper <- det.range(col.x = rccr.table$mean.x.left, col.y = rccr.table$upper.bound, point = mid.start, side = "right")
   sep.start.ci.lower <- det.range(col.x = rccr.table$mean.x.left, col.y = rccr.table$lower.bound, point = mid.start, side = "right")
   sep.point.ci.upper <- det.range(col.x = rccr.table$mean.x.left, col.y = rccr.table$upper.bound, point = mid.point, side = "left")
   sep.point.ci.lower <- det.range(col.x = rccr.table$mean.x.left, col.y = rccr.table$lower.bound, point = mid.point, side = "left")
-  sep.points <- approx(c(sep.point[2], sep.start[2]), c(sep.point[1], sep.start[1]), xout = c(mid.point,mid.start))
-  sep.points.upper <- approx(c(sep.point.ci.upper[2], sep.start.ci.upper[2]), c(sep.point.ci.upper[1], sep.start.ci.upper[1]), xout = c(mid.point,mid.start))
-  sep.points.lower <- approx(c(sep.point.ci.lower[2], sep.start.ci.lower[2]), c(sep.point.ci.lower[1], sep.start.ci.lower[1]), xout = c(mid.point,mid.start))
+  mid.point.idx <- min.idx(col.y = rccr.table$mean.y, point = mid.point)
+  mid.point.idx.upper <- min.idx(col.y = rccr.table$upper.bound, point = mid.point)
+  mid.point.idx.lower <- min.idx(col.y = rccr.table$lower.bound, point = mid.point)
+  sep.points <- approx(rccr.table$mean.y[mid.point.idx:nrow(rccr.table)], rccr.table$mean.x.left[mid.point.idx:nrow(rccr.table)], xout = c(mid.point,mid.start))
+  sep.points.upper <- approx(rccr.table$upper.bound[mid.point.idx.upper:nrow(rccr.table)], rccr.table$mean.x.left[mid.point.idx.upper:nrow(rccr.table)], xout = c(mid.point,mid.start))
+  sep.points.lower <- approx(rccr.table$lower.bound[mid.point.idx.lower:nrow(rccr.table)], rccr.table$mean.x.left[mid.point.idx.lower:nrow(rccr.table)], xout = c(mid.point,mid.start))
   range.box[[i]] <- as.data.frame(c(sep.points[["y"]][1], sep.points[["y"]][2]))
   range.box.ci <- as.data.frame(cbind(c(sep.points.upper[["y"]][1], sep.points.upper[["y"]][2]),c(sep.points.lower[["y"]][1], sep.points.lower[["y"]][2])))
   pop_pair <- paste0(pop.name.1,'_',pop.name.2)
   range.box[[i]] <- cbind(range.box[[i]], range.box.ci, rep(pop_pair, nrow(range.box[[i]])), c(mid.point,mid.start))
   colnames(range.box[[i]]) <- c("time.point","lower","upper","pair", "rccr")
   rownames(range.box[[i]]) <- c(mid.point,mid.start)
+  #range.box.ci.lower[[i]] <- as.data.frame(c(sep.points.lower[["y"]][1], sep.points.lower[["y"]][2]))
   sep.plot <- ggplot() +
-    geom_rect(data = range.box[[i]], xmin = range.box[[i]][1,2], xmax = range.box[[i]][1,3], ymin = 0, ymax = Inf, fill = "#f6ba75", alpha = 0.7) + # rccr = 0.5, 95% CI
-    geom_rect(data = range.box[[i]], xmin = range.box[[i]][2,2], xmax = range.box[[i]][2,3], ymin = 0, ymax = Inf, fill = "#f6ba75", alpha = 0.7) + #rccr = 0.8, 95% CI
-    geom_rect(data = range.box[[i]], xmin = range.box[[i]][1,1], xmax = range.box[[i]][2,1], ymin = 0, ymax = Inf, fill = "#fff2a7")
+    geom_rect(data = range.box[[i]], xmin = range.box[[i]][1,1], xmax = range.box[[i]][2,1], ymin = 0, ymax = Inf, fill = "#fff2a7") +
+    geom_rect(data = range.box[[i]], xmin = range.box[[i]][1,2], xmax = range.box[[i]][1,3], ymin = 0, ymax = Inf, fill = "#f6ba75", alpha = 1) + # rccr = 0.5, 95% CI
+    geom_rect(data = range.box[[i]], xmin = range.box[[i]][2,2], xmax = range.box[[i]][2,3], ymin = 0, ymax = Inf, fill = "#f6ba75", alpha = 1) #rccr = 0.8, 95% CI
   if (grepl("final\\.out$", files[i])){ #if it is an averaging data, also plot original data
     files.ori <- c()
     for (k in 1:length(dirs)){
@@ -218,7 +252,7 @@ for (i in 1:length(files)){
   sep.plot <- sep.plot + 
     scale_x_continuous(breaks = xticks, 
                        labels = x.mark(xticks),
-                       #limits = c(rccr.table$mean.x.left[1],x.max), #optional
+                       limits = c(rccr.table$mean.x.left[1],x.max),
                        name = "Years ago",
                        expand = c(0,0)) +
     scale_y_continuous(name = "Relative CCR",
@@ -230,13 +264,14 @@ for (i in 1:length(files)){
           panel.border = element_rect(color = "black", fill = NA, linewidth = 0.5),
           panel.grid = element_blank(),
           axis.ticks = element_line(colour = "black", linewidth = 0.2),
+          #axis.title = element_text(face = "bold"),
           axis.text = element_text(color = "black", size = 7.5),
+          #legend.title = element_text(face = "bold"),
           legend.position = "none",
           plot.title = element_text(size = 7.5),
           text = element_text(color = "black", size = 7.5))
   options(scipen=1)
   rccr.plots[[i]] <- sep.plot
-  rccr.tables[[i]] <- rccr.table
 }
 
 #for outputting separation times
@@ -250,16 +285,14 @@ range.box.all$lower <- 10^range.box.all$lower
 out.box.name <- paste0(path,"/population_rccr_sep_range_", mu_out, "_", gen, "_", random, ".txt")
 write.table(range.box.all, file = out.box.name, quote = F, sep = "\t", row.names = FALSE, col.names = TRUE)
 
-plot.heights = sum(rep(4.5, ceiling(length(files)/3)))
+plot.heights = sum(rep(4.2, ceiling(length(files)/3)))
 out.plot.name <- paste0(path,"/population_rccr_plot_", mu_out, "_", gen, "_", random, ".line.tiff")
 if (grepl("windows", os, ignore.case=T)){
   out.plot.name <- gsub("/", "\\\\", out.plot.name)
 }
-tiff(out.plot.name, width=18, height=plot.heights, res = 600, units = "cm")
+tiff(out.plot.name, width=15, height=plot.heights, res = 600, units = "cm")
 grid.arrange(grobs = rccr.plots,
              ncol = 3,
-             widths = rep(6, 3), 
-             heights = rep(4.5, ceiling(k/3)))
+             widths = rep(5, 3), 
+             heights = rep(4.2, ceiling(length(files)/3)))
 dev.off()
-out.plot.name.data <- paste0(path,"/population_rccr_", mu_out, "_", gen, "_", random, ".Rdata")
-save(rccr.tables, range.box.all, file = out.plot.name.data)
