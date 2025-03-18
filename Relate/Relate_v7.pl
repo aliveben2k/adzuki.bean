@@ -906,7 +906,7 @@ if ($dps == 1){
 						last;
 					}
 				}
-				unless (-e "$o_path_dps[$l]\/$ran\_$popi_d_names[$l]\_selection_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].sele" && $ow == 0){
+				unless (-e "$o_path_dps[$l]\/$ran\_$popi_d_names[$l]\_selection_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].sele" && $clues == 0 && $ow == 0){
 					print "Detect selection region \(chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\) start...\n";
 					$qout = "$Relate\/scripts/DetectSelection/DetectSelection.sh -i $o_path_dps[$l]\/popsize\/$ran\_popsize_chr$clues_chr[$i] -m $mrate $year\--first_bp $clues_fbp[$i] --last_bp $clues_lbp[$i] -o $o_path_dps[$l]\/$ran\_$popi_d_names[$l]\_selection_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\\n";
 				}
@@ -924,7 +924,7 @@ if ($dps == 1){
 			foreach my $i (1..scalar(@r_inputs_dps)){
 				$qout = "";
 				print BASH "qsub \.\/qsub_files\/$ran\_relate_DPS_$popi_d_names[$l]\_$i\.q\n";
-				unless (-e "$o_path\/DPS\/$popi_d_names[$l]\/$ran\_selection_chr$i.sele" && $ow == 0){
+				unless (-e "$o_path\/DPS\/$popi_d_names[$l]\/$ran\_selection_chr$i.sele" && $clues == 0 && $ow == 0){
 					$qout .= "$Relate\/scripts/DetectSelection/DetectSelection.sh -i $r_inputs_dps[$i-1] -m $mrate $year\-o $o_path\/DPS\/$popi_d_names[$l]\/$ran\_selection_chr$i\\n";
 				}
 				push(@popi_dps_outputs, "$o_path\/DPS\/$popi_d_names[$l]\/$ran\_selection_chr$i.sele");
@@ -1056,7 +1056,7 @@ if ($clues == 1 || $tvs == 1){
                         print "Sample branch lengths for CLUES \(chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\) start...\n";
                         $qout = "$Relate\/scripts/SampleBranchLengths/SampleBranchLengths.sh -i $o_path\/popsize\/$ran\_popsize_chr$clues_chr[$i] -m $mrate $ns\--first_bp $clues_fbp[$i] --last_bp $clues_lbp[$i] $coal\--format $cf -o $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\\n";
                     }
-                    unless (-e "$o_path_clues[$l]\/chr$clues_chr[$i]\_$clues_fbp[$i].txt" && -e "$o_path_clues[$l]\/chr$clues_chr[$i]\_$clues_fbp[$i]\_freq.txt" && $ow == 0){
+                    unless (-e "$o_path\/CLUES\/ALL\/chr$clues_chr[$i]\_$clues_fbp[$i].txt" && -e "$o_path\/CLUES\/ALL\/chr$clues_chr[$i]\_$clues_fbp[$i]\_freq.txt" && $ow == 0){
                         my $haplo;
                         if ($hap == 1){
                             $haplo = "-hap";
@@ -1064,10 +1064,10 @@ if ($clues == 1 || $tvs == 1){
                         else {
                             $haplo = "";
                         }
-                        $qout .= "perl extract_derived_file.pl -i $o_path\/inputs\/$ran\_input_chr$clues_chr[$i] -o $o_path_clues[$l] -pos $clues_fbp[$i] $haplo\\n";
+                        $qout .= "perl extract_derived_file.pl -i $o_path\/inputs\/$ran\_input_chr$clues_chr[$i] -o $o_path\/CLUES\/ALL\/ -pos $clues_fbp[$i] $haplo\\n";
                     }
-                    unless (-e "$o_path_clues[$l]\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\_times.txt"){
-                        $qout .= "python $Relate\/clues\/RelateToCLUES.py --RelateSamples $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].newick --DerivedFile $o_path_clues[$l]\/chr$clues_chr[$i]\_$clues_fbp[$i].txt --out $o_path_clues[$l]\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\\n";
+                    unless (-e "$o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\_times.txt"){
+                        $qout .= "python $Relate\/clues\/RelateToCLUES.py --RelateSamples $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].newick --DerivedFile $o_path\/CLUES\/ALL\/chr$clues_chr[$i]\_$clues_fbp[$i].txt --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\\n";
                     }
                     print BASH "qsub \.\/qsub_files\/$ran\_relate_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\.q\n";
                     &pbs_setting("$exc\-cj_quiet $conda\-cj_qname $z\_relate_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] -cj_sn $ran -cj_qout . $qout");
@@ -1077,7 +1077,7 @@ if ($clues == 1 || $tvs == 1){
                     $qout = "";
                     my $pf;
                     if ($exc){
-						open(FREQ, "<$o_path_clues[$l]\/chr$clues_chr[$i]\_$clues_fbp[$i]\_freq.txt") || die "Cannot open $o_path_clues[$l]\/chr$clues_chr[$i]\_$clues_fbp[$i]\_freq.txt: $!\n";
+						open(FREQ, "<$o_path\/CLUES\/ALL\/chr$clues_chr[$i]\_$clues_fbp[$i]\_freq.txt") || die "Cannot open $o_path\/CLUES\/ALL\/chr$clues_chr[$i]\_$clues_fbp[$i]\_freq.txt: $!\n";
 						$pf = <FREQ>;
 						chomp($pf);
 						close(FREQ);
@@ -1088,11 +1088,11 @@ if ($clues == 1 || $tvs == 1){
 					}
                     unless (-e "$o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\_post.txt" && $ow == 0){
                         #$qout .= "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
-                        push(@plot_py, "python $Relate\/clues\/inference.py --times $o_path_clues[$l]\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\_times.txt --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $nat$tco$df$pf$dom$coal$cbins[$i]\\n");
+                        push(@plot_py, "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\_times.txt --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $nat$tco$df$pf$dom$coal$cbins[$i]\\n");
                     }
                     elsif ($replot =~ /clues|all/i){
                         #$qout .= "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $tco$pf$dom$coal$cbins[$i]\\n";
-                        push(@plot_py, "python $Relate\/clues\/inference.py --times $o_path_clues[$l]\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\_times.txt --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $nat$tco$df$pf$dom$coal$cbins[$i]\\n");
+                        push(@plot_py, "python $Relate\/clues\/inference.py --times $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\_times.txt --out $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $nat$tco$df$pf$dom$coal$cbins[$i]\\n");
                     }
                     if ($clues_plot == 1){
                         unless (-e "$o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].pdf" && $ow == 0){
