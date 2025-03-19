@@ -1097,11 +1097,11 @@ if ($clues == 1 || $tvs == 1){
                     if ($clues_plot == 1){
                         unless (-e "$o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i].pdf" && $ow == 0){
                             #$qout .= "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
-                            push(@plot_r, "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n");
+                            push(@plot_r, "python $Relate\/clues\/plot_traj_clues2.py --figure $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --post $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\_post.txt --freqs $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\_freqs.txt\\n");
                         }
                         elsif ($replot =~ /clues|all/i){
                             #$qout .= "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n";
-                            push(@plot_r, "Rscript clues_plot.R -f $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] $cps[$i]\\n");
+                            push(@plot_r, "python $Relate\/clues\/plot_traj_clues2.py --figure $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i] --post $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\_post.txt --freqs $o_path\/CLUES\/ALL\/$ran\_$z\_CLUES_chr$clues_chr[$i]\_$clues_fbp[$i]\-$clues_lbp[$i]\_freqs.txt\\n");
                         }
                     }
                 }
