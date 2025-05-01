@@ -1,8 +1,6 @@
 #!/usr/bin/perl
 
 use Term::ANSIColor qw(:constants);
-use threads;
-use threads::shared;
 #use Time::HiRes qw(time);
 my $home = (getpwuid $>)[7];
 if (-e "$home\/softwares\/qsub_subroutine.pl"){
@@ -23,23 +21,25 @@ print "Input command line:\n";
 print "perl introgression_ratio_pipeline\.pl @ARGV\n\n";
 
 sub usage {
-    print "Usage: perl introgression_ratio_pipeline.pl -vcf PATH -list LIST_FILE [-win INT] [-step INT] [-pre PREFIX] [-p1c COLOR] [-p2c COLOR] [-ci] [-rcal] [-rplot] [-sn SN] [-m FLOAT] [-d FLOAT] [-n] [-mem INT] [-local] [-ow] [-exc]\n";
+    print "Usage: perl introgression_ratio_pipeline.pl -vcf PATH -list LIST_FILE [-win INT] [-step INT] [-pre PREFIX] [-p1c COLOR] [-p2c COLOR] [-ci] [-rcal] [-rplot] [-conda NAME] [-sn SN] [-m FLOAT] [-d FLOAT] [-n] [-mem INT] [-local] [-ow] [-exc]\n";
     print "-list: trios list, population_name follows by sample_names. 3 lines: 2 parents at first two lines, and the testing population in the 3rd line.\n";
     print "-win: window size (SNP number). Default: 1000\n";
     print "-step: step size (SNP number). Default: 500\n";
     print "-p1c: represent color of ancestor 1 in the figure. If you use color code, please add \'\'. Default: blue\n";
-    print "-p1c: represent color of ancestor 2 in the figure. If you use color code, please add \'\'. Default: red\n";
+    print "-p2c: represent color of ancestor 2 in the figure. If you use color code, please add \'\'. Default: red\n";
     print "-ci: shown 95% confidence interval or not. Default: False\n";
     print "-m: missing rate of the sites. Default: 0.8\n";
     print "-d: allele differential rate of the sites between two parents. Default: 0.8\n";
     print "-rcal: re-calcutate introgression ratios only.\n";
     print "-rplot: re-plot introgression figures only.\n";
+    print "-conda: conda environment name. Default: R-4.1\n";
     print "-n: threads to use. Default: 1\n";
-    print "-mem: momory to use. Default: 12Gb\n";
+    print "-mem: memory to use. Default: 12Gb\n";
     print "-ow: over-write the outputs.\n";
     print "-sn: serial number for the run. Required if -rcal, -rplot, or -ow is used.\n";
     print "-local: run the pipeline in the local machine. (Warning: It might be very slow)\n";
-    print "-exc: send jobs to execute.\n";
+    print "-exc: send jobs to execute.\n\n";
+    print "Dependencies: bcftools, conda environment for R, R packages: ggplot2, dplyr\n";
 }
 
 my $path_v; my $path; my @vcfs; my $list; my $out; my $ran; my $exc = 0; my $missing = 0.8; my $diff = 0.8;
@@ -157,7 +157,10 @@ for (my $i=0; $i<=$#ARGV; $i++){
 		if ($p2c =~ /\#/){
 			$p2c = "\\$p2c";
 		}
-	}	
+	}
+	if ($ARGV[$i] eq "\-conda"){
+		$conda = $ARGV[$i+1];
+	}
 }
 
 unless (@vcfs && $list){
