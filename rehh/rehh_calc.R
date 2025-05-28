@@ -480,40 +480,12 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
   } else {
     load(paste0(out, pname, "_", chr,"_scan_hh_xpehh.rda"))
   }
-  #convert ies to ihs
   if (!file.exists(paste0(out, pname, "_", chr,"_xpehh.rda"))){
-    # if (!file.exists(paste0(out, pname, "_", chr,"_ihs.rda"))){
-    #   scan.ihs <- ihh2ihs(scan.ies, freqbin = 0, min_maf = min.maf)
-    #   scan.ihs2 <- ihh2ihs(scan.ies2, freqbin = 0, min_maf = min.maf)
-    #   save(scan.ihs, scan.ihs2, file = paste0(out, pname, "_", chr,"_ihs.rda"))
-    # } else {
-    #   load(paste0(out, pname, "_", chr,"_ihs.rda"))
-    # }
-    #calculate ihs by window
-    # if (!file.exists(paste0(out, pname, "_", chr,"_window_ihs.rda"))){
-    #   scan.ihs.window <- calc_candidate_regions(scan.ihs, window_size = w_size, pval = TRUE, threshold = 0)
-    #   scan.ihs.window2 <- calc_candidate_regions(scan.ihs2, window_size = w_size, pval = TRUE, threshold = 0)
-    #   save(scan.ihs.window, scan.ihs.window2, file = paste0(out, pname, "_", chr,"_window_ihs.rda"))
-    # } else {
-    #   load(paste0(out, pname, "_", chr,"_window_ihs.rda"))
-    # }
     #calculate XP-EHH
     xp.ehh <- ies2xpehh(scan.ies, scan.ies2, ehhs.pop, ehhs.pop2)
     #save data without sp.ehh
     save(xp.ehh, file = paste0(out, pname,"_xpehh.rda"))
   }
-  # #draw distribution plot
-  # if (!file.exists(paste0(out, "td_", lim.ehh, ".distrib_plot.tiff"))){
-  #   tiff(paste0(out, "td_", lim.ehh,".distrib_plot.tiff"), units = "cm", res = 600, width = 4, height = 4)
-  #   distribplot(scan.ihs[["ihs"]][["IHS"]], lty = 1, lwd = 1, col = c("#4b8bcb", "#ed3325"), qqplot = FALSE)
-  #   dev.off()
-  # }
-  # #manhattanplot
-  # if (!file.exists(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"))){
-  #   tiff(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"), units = "cm", res = 600, width = 9, height = 4)
-  #   manhattanplot(scan.ihs, pval = FALSE, threshold = c(-3, 3))
-  #   dev.off()
-  # }
 }
 
 
