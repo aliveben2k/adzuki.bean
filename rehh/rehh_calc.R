@@ -1,7 +1,4 @@
 options(warn=-1)
-#ulimit::memory_limit(128000)
-#library(R.utils)
-#library(vcfR)
 s.help <- function(){
   cat("\nThis scirpt is writtern by Ben Chien. May. 2023
 Usage: Rscript rehh_calc.R -thap THAP_FILE -map MAP_FILE -chr CHR_NAME [-pos POSITION] [-pinfo INFO_FILE] [-popi POPULATION_NAMES] [-popi2 POPULATION_NAMES] [-syn] [-min MIN_BOUNDARY] [-max MAX_BOUNDARY] [-l EHH_LIMIT_VALUE] [-w WINDOW_SIZE] [-maf MIN_MAF_VALUE] [-gm GENO_MISSING_PREC] [-hm HAPLOTYPE_MISSING_PREC] [-m METHOD] [-h]\n
