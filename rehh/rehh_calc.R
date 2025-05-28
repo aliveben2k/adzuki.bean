@@ -482,13 +482,13 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
   }
   #convert ies to ihs
   if (!file.exists(paste0(out, pname, "_", chr,"_xpehh.rda"))){
-    if (!file.exists(paste0(out, pname, "_", chr,"_ihs.rda"))){
-      scan.ihs <- ihh2ihs(scan.ies, freqbin = 0, min_maf = min.maf)
-      scan.ihs2 <- ihh2ihs(scan.ies2, freqbin = 0, min_maf = min.maf)
-      save(scan.ihs, scan.ihs2, file = paste0(out, pname, "_", chr,"_ihs.rda"))
-    } else {
-      load(paste0(out, pname, "_", chr,"_ihs.rda"))
-    }
+    # if (!file.exists(paste0(out, pname, "_", chr,"_ihs.rda"))){
+    #   scan.ihs <- ihh2ihs(scan.ies, freqbin = 0, min_maf = min.maf)
+    #   scan.ihs2 <- ihh2ihs(scan.ies2, freqbin = 0, min_maf = min.maf)
+    #   save(scan.ihs, scan.ihs2, file = paste0(out, pname, "_", chr,"_ihs.rda"))
+    # } else {
+    #   load(paste0(out, pname, "_", chr,"_ihs.rda"))
+    # }
     #calculate ihs by window
     # if (!file.exists(paste0(out, pname, "_", chr,"_window_ihs.rda"))){
     #   scan.ihs.window <- calc_candidate_regions(scan.ihs, window_size = w_size, pval = TRUE, threshold = 0)
@@ -498,7 +498,7 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
     #   load(paste0(out, pname, "_", chr,"_window_ihs.rda"))
     # }
     #calculate XP-EHH
-    xp.ehh <- ies2xpehh(scan.ihs, scan.ihs2, ehhs.pop, ehhs.pop2)
+    xp.ehh <- ies2xpehh(scan.ies, scan.ies2, ehhs.pop, ehhs.pop2)
     #save data without sp.ehh
     save(xp.ehh, file = paste0(out, pname,"_xpehh.rda"))
   }
