@@ -290,11 +290,9 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
           panel.border = element_rect(color = "black", fill = NA, size = 0.5),
           panel.grid = element_blank()
     ) +
-    #ylim(0,1) +
     scale_x_continuous(name=paste0(hap.filter@chr.name, ' (Mb)'), limits = c(x_min/1000000,x_max/1000000)) +
     scale_y_continuous(name="EHH", limits =c(0,1)) +
     scale_color_manual(values = col.brewer.theme)
-    #labs(x=paste0(hap.filter@chr.name, ' (Mb)'), y="EHH")
   tiff_out <- c()
   if (length(min.maf) > 0){
     tiff_out <- paste0(out, "td_", lim.ehh, ".", sp.mrk, ".", "maf_", min.maf, ".ehh.tiff")
@@ -333,18 +331,6 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
   scan.ihs.window <- calc_candidate_regions(scan.ihs, window_size = w_size, pval = TRUE, threshold = 0)
   #save data without sp.ehh
   save(scan.ihh, scan.ihs, scan.ihs.window, file = paste0(out, lim.ehh, "_", chr, ".rda"))
-  # #draw distribution plot
-  # if (!file.exists(paste0(out, "td_", lim.ehh, ".distrib_plot.tiff"))){
-  #   tiff(paste0(out, "td_", lim.ehh,".distrib_plot.tiff"), units = "cm", res = 600, width = 4, height = 4)
-  #   distribplot(scan.ihs[["ihs"]][["IHS"]], lty = 1, lwd = 1, col = c("#4b8bcb", "#ed3325"), qqplot = FALSE)
-  #   dev.off()
-  # }
-  # #manhattanplot
-  # if (!file.exists(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"))){
-  #   tiff(paste0(out, "td_", lim.ehh, ".manhat_plot.tiff"), units = "cm", width = 9, height = 4)
-  #   manhattanplot(scan.ihs, pval = FALSE, threshold = c(-3, 3))
-  #   dev.off()
-  # }
 } else if (length(sp.mrk) != 0 && rehh.method == "ehhs") {
   #col.brewer.theme <- c("#4b8bcb","gold","#ed3325","#255271", "#f7931e", "#921a1d", "#7758a5", "#f9bbb9", "#c6b1d4", "#ed7f6d", "#90a7b7")
   col.brewer.theme <- c("#4b8bcb","gold","#ed3325","#255271", "#c6b1d4", "#921a1d", "#7758a5", "#f9bbb9", "#c6b1d4", "#ed7f6d", "#90a7b7")
@@ -466,8 +452,6 @@ if (length(sp.mrk) != 0 && rehh.method == "ehh"){
     hap.subset <- subset(hap, min_perc_geno.hap = geno.missing, min_maf = min.maf, min_perc_geno.mrk = mrk.missing)
     hap.subset2 <- subset(hap, min_perc_geno.hap = geno.missing, min_maf = min.maf, min_perc_geno.mrk = mrk.missing)
   }
-  #hap.subset.all <- rbind(hap.subset.all, hap.subset)
-  #hap.subset.all2 <- rbind(hap.subset.all2, hap.subset2)
   
   #scan iES of the genome
   if (!file.exists(paste0(out, pname, "_", chr,"_scan_hh_xpehh.rda"))){
