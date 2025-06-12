@@ -256,16 +256,26 @@ foreach my $vcf (@vcfs){
                 if ($sum eq "."){
                     $sum = "";
                     foreach (@allele){
-                        if ($_ =~ /[1-9]/){
-                        	$_ = 1;
-                            $sum += $_;
-                        }
-                        elsif ($_ == 0){
-                            $sum += $_;
+                        if ($_ eq '.'){
+                        $miss ++;
                         }
                     }
-                    unless ($sum >= 0 && $sum <= 2){
+                    if ($miss == 2){
                         $sum = "NA";
+                    }
+                    else {
+                        foreach (@allele){
+                            if ($_ =~ /[1-9]/){
+                                $_ = 1;
+                                $sum += $_;
+                            }
+                            elsif ($_ == 0){
+                                $sum += $_;
+                            }
+                        }
+                        unless ($sum >= 0 && $sum <= 2){
+                            $sum = "NA";
+                        }
                     }
                 }
             }
