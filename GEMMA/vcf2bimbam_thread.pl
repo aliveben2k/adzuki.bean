@@ -348,20 +348,30 @@ sub v2b {
 		}
         foreach my $j (9..$#eles){
             my @format = split(/\:/, $eles[$j]);
-            my @allele; my $sum;
+            my @allele; my $sum; my $miss = 0;
             @allele = split(/\/|\|/, $format[0]);
             if ($ds == 0 || $ioff == 1){ #if there is no "DS" field or turn off imputed data, use sum of "GT" field
                 foreach (@allele){
-                    if ($_ =~ /[1-9]/){
-                    	$_ = 1;
-                        $sum += $_;
-                    }
-                    elsif ($_ == 0){
-                        $sum += $_;
+                    if ($_ eq '.'){
+                        $miss ++;
                     }
                 }
-                unless ($sum =~ /[0-9]/){
+                if ($miss == 2){
                     $sum = "NA";
+                }
+                else {
+                    foreach (@allele){
+                        if ($_ =~ /[1-9]/){
+                            $_ = 1;
+                            $sum += $_;
+                        }
+                        elsif ($_ == 0){
+                            $sum += $_;
+                        }
+                    }
+                    unless ($sum =~ /[0-9]/){
+                        $sum = "NA";
+                    }
                 }
             }
             else { #if there is a "DS" field, but has no value, use sum of "GT" field
