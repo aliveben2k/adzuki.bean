@@ -3,7 +3,6 @@
 use Term::ANSIColor qw(:constants);
 use threads;
 use threads::shared;
-#use Time::HiRes qw(time);
 my $home = (getpwuid $>)[7];
 if (-e "$home\/softwares\/qsub_subroutine.pl"){
 	require "$home\/softwares\/qsub_subroutine.pl";
@@ -89,8 +88,6 @@ for (my $i=0; $i<=$#ARGV; $i++){
 	#end of test
 }
 
-#print "debug: @vcfs\n";
-
 unless(@vcfs){
 	die "-vcf argument is required.\n";
 }
@@ -117,9 +114,6 @@ foreach my $i (0..$#chrs){
 }
 close(INFO);
 
-#print "debug: @chrs\n";
-
-#my $begin_time = time();
 my $thread; my @check;
 foreach my $cnt (0..$#vcfs){
 	$thread = $thread_in;
@@ -168,7 +162,6 @@ foreach my $cnt (0..$#vcfs){
     		shift(@line_eles);
     		push(@lists, @line_eles);
     	}
-    	#print "debug: @lists\n";
         foreach (@lists){
             foreach my $k (0..$#vcf_samples){
                 if ($_ eq $vcf_samples[$k]){
@@ -188,7 +181,6 @@ foreach my $cnt (0..$#vcfs){
         print OUT "Allele\t";
         print OUT join("\t", @header_for_print), "\n";
     }
-    #print "debug: @check\n";
     foreach my $i (0..$#check){
         if ($sep == 1 && scalar(@check) > 1){
     	    $out =~ s/trios.gz$/$check[$i].$ran\Qtrios\E.gz/;
@@ -223,7 +215,6 @@ foreach my $cnt (0..$#vcfs){
         }
         #end of test
 	    my $division; my $results;
-	    #print "debug: $thread\n";
 	    if ($thread > 1){
 		    if ($vcfs[$cnt] =~ /\.gz$/){
     		    unless (-e "$vcfs[$cnt].tbi"){
@@ -255,7 +246,6 @@ foreach my $cnt (0..$#vcfs){
     			    $region_start = int($chr_length/$thread*($d-1))+1;
     			    $region_end = $chr_length;
     		    }
-    		    #print "debug: $vcfs[$cnt] $sep $chr $region_start $region_end $list\n";
     		    $thr[$d] = threads->create('v2b', ($vcfs[$cnt],$sep,$check[$i],$region_start,$region_end,$list,$skm));
     	    }
     	    foreach my $d (1..$thread){
@@ -276,8 +266,6 @@ foreach my $cnt (0..$#vcfs){
         close(OUT);
     }
 }
-#my $end_time = time();
-#printf("%.2f\n", $end_time - $begin_time);
 print "Done.\n";
 
 sub v2b {
@@ -293,7 +281,6 @@ sub v2b {
     		push(@lists, @line_eles);
     	}
     }
-    #print "debug: @lists\n";
     if ($vcf =~ /\.gz$/){
     	unless (-e "$vcf.tbi"){
     		system("tabix $vcf");
@@ -315,7 +302,6 @@ sub v2b {
         chomp($line);
         $line =~ s/[\x0A\x0D]//g;
         if ($line =~ /^\#/){
-        	#print "debug: $line\n";
             if ($line =~ /^\#CHROM/){
                 @samples = split(/\t/, $line);
                 if ($list){
@@ -404,7 +390,7 @@ sub v2b {
             my @allele; my $allele1; my $allele2;
             @allele = split(/\/|\|/, $format[0]);
             foreach my $x (0..$#allele){
-                if ($allele[$x] =~ /[1-8]/){
+                if ($allele[$x] =~ /[1-9]/){
                     $allele[$x] = $allele[$x];
                 }
                 elsif ($allele[$x] == 0){
@@ -427,7 +413,6 @@ sub v2b {
             	}
             }
         }
-        #print "debug: @eles\n";
         $out .= "$eles[1]\_$eles[0]\_a1\t";
         $out .= join("\t", @list_array);
         $out .= "\n";

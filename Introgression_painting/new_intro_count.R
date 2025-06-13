@@ -98,7 +98,7 @@ lines <- readLines(pop.info)
 geno <- read.table(geno.file, header = T, sep = "\t")
 geno.info <- read.table(geno.info.file, header = T, sep = "\t")
 
-#seperate genotype file into 3 lists
+#separate genotype file into 3 lists
 trio <- c()
 geno.trio <- list()
 for (i in 1:length(lines)){
@@ -194,7 +194,7 @@ for (i in 5:ncol(child.geno)){
     n.win.start <- 1
     for (l in 1:slide.number){
       n.win.end = n.win.start + window.size - 1
-      if (n.win.end > nrow(indv.unique.table.chr)){ #define the max broader
+      if (n.win.end > nrow(indv.unique.table.chr)){ #define the max border
         n.win.end = nrow(indv.unique.table.chr)
       }
       if (n.win.end - n.win.start < 10){ #if the last window has SNP number < 10, don't count it
