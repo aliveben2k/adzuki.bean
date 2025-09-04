@@ -93,6 +93,12 @@ for (i in 1:length(args)){
   }
 }
 
+# check window size and step size
+if (step.size >= window.size){
+    cat("-s: the step size cannot be equal or larger than the window size.\n")
+    quit()  
+}
+
 # Read files
 lines <- readLines(pop.info)
 geno <- read.table(geno.file, header = T, sep = "\t")
