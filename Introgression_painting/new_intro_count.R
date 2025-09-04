@@ -86,7 +86,7 @@ for (i in 1:length(args)){
   }
   if (args[i] == '-s' || args[i] == '--step'){
     step.size <- as.numeric(args[i+1])
-    if (grepl("[^0-9.]", step.size) || step.size >= 10){
+    if (grepl("[^0-9.]", step.size) || step.size < 10){
       cat("-s: only numbers >= 10 is allowed.\n")
       quit()
     }
