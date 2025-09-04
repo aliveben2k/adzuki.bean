@@ -194,7 +194,7 @@ for (i in 5:ncol(child.geno)){
     #change the position in the first and the last rows to match the actual chr length
     indv.unique.table.chr[1,2] <- 1
     indv.unique.table.chr[nrow(indv.unique.table.chr),2] <- chr.len
-    #start to sliding data into windows
+    #start to slide data into windows
     slide.number <- ceiling(nrow(indv.unique.table.chr) / step.size)
     start.win.pos <- c()
     n.win.start <- 1
