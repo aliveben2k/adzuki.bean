@@ -145,7 +145,7 @@ P1_genotype <- ifelse(diff.ratio.table$p1.anc.ratio < 0.5, 1, 0)
 P2_genotype <- ifelse(diff.ratio.table$p2.anc.ratio < 0.5, 1, 0)
 diff.ratio.table <- cbind(P1_genotype, P2_genotype, diff.ratio.table)
 
-#handling with test population
+#handle the test population
 child.geno <- geno.trio[[3]][rownames(geno.trio[[3]]) %in% rownames(diff.ratio.table),]
 child.geno.name <- rownames(child.geno)
 child.pos <- c()
@@ -159,7 +159,7 @@ child.geno <- cbind(Chr = child.chr, Pos = child.pos, P1_geno = diff.ratio.table
 child.geno[,2:ncol(child.geno)] <- child.geno[,2:ncol(child.geno)] %>% mutate_if(is.character, as.numeric)
 #child.geno$average <- rowMeans(child.geno[7:ncol(child.geno)], na.rm = T) #the last column is the average of the test population
 
-#handling the individuals in the test population
+#handle individuals in the test population
 pop.table <- c()
 for (i in 5:ncol(child.geno)){
   indv.table <- child.geno[,c(1:4,i)]
@@ -244,7 +244,7 @@ get_ci <- function(row) {
   }
 }
 
-#handling population table
+#handle population table
 pop.unique.table <- pop.table %>%
   group_by(Chr, Pos) %>%
   summarise(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)), .groups = 'keep')
