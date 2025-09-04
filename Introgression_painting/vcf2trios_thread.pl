@@ -107,12 +107,14 @@ if ($ran){
 else {
 	$info_out = "$path_l\/genome_info.txt";
 }
-open (INFO, ">$info_out") || die "Cannot write the genome info to $info_out: $!\n";
-print INFO "Chr\tLength\n";
-foreach my $i (0..$#chrs){
-	print INFO "$chrs[$i]\t$chr_lengths[$i]\n";
+unless (-e $info_out){
+    open (INFO, ">$info_out") || die "Cannot write the genome info to $info_out: $!\n";
+    print INFO "Chr\tLength\n";
+    foreach my $i (0..$#chrs){
+	    print INFO "$chrs[$i]\t$chr_lengths[$i]\n";
+    }
+    close(INFO);
 }
-close(INFO);
 
 my $thread; my @check;
 foreach my $cnt (0..$#vcfs){
