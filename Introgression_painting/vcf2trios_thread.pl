@@ -61,7 +61,7 @@ for (my $i=0; $i<=$#ARGV; $i++){
 		else {
 			$path_l = ".";
 		}
-		$path_l = &check_path($path);
+		$path_l = &check_path($path_l);
 	}
 	if ($ARGV[$i] eq "\-sn"){
         $ran = "$ARGV[$i+1]";
